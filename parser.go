@@ -5,6 +5,7 @@ import "io/ioutil"
 type Document struct {
 	Header    *HeaderSection
 	ColorMode *ColorModeDataSection
+	Resources *ImageResourcesSection
 }
 
 var (
@@ -31,6 +32,12 @@ func Parse(path string) (*Document, error) {
 		return nil, err
 	}
 	doc.ColorMode = cm
+
+	ir, err := newImageResources()
+	if err != nil {
+		return nil, err
+	}
+	doc.Resources = ir
 
 	return doc, nil
 }
