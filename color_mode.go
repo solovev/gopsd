@@ -9,7 +9,7 @@ type ColorModeDataSection struct {
 	Length int32
 }
 
-func newColorMode(mode int) (*ColorModeDataSection, error) {
+func newColorMode(mode int16) (*ColorModeDataSection, error) {
 	c := new(ColorModeDataSection)
 
 	len, err := reader.ReadInt32()
@@ -35,6 +35,9 @@ func newColorMode(mode int) (*ColorModeDataSection, error) {
 			return nil, err
 		}
 	} else {
+		if len != 0 {
+			return nil, errors.New(fmt.Sprintf("Wrong length of color mode data section: %d! Expected: 0.", len))
+		}
 		err = reader.Skip(len)
 		if err != nil {
 			return nil, err

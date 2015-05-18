@@ -3,7 +3,8 @@ package gopsd
 import "io/ioutil"
 
 type Document struct {
-	Header *HeaderSection
+	Header    *HeaderSection
+	ColorMode *ColorModeDataSection
 }
 
 var (
@@ -18,11 +19,18 @@ func Parse(path string) (*Document, error) {
 	reader = NewReader(data)
 
 	doc := new(Document)
+
 	header, err := newHeader()
 	if err != nil {
 		return nil, err
 	}
 	doc.Header = header
+
+	cm, err := newColorMode(header.ColorMode)
+	if err != nil {
+		return nil, err
+	}
+	doc.ColorMode = cm
 
 	return doc, nil
 }
