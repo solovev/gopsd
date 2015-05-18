@@ -82,7 +82,7 @@ func newHeader() (*HeaderSection, error) {
 		return nil, err
 	}
 	if c < 0 || c > 9 {
-		return nil, errors.New(fmt.Sprintf("Wrong document depth: %c! Supported values are: Bitmap = 0; Grayscale = 1; Indexed = 2; RGB = 3; CMYK = 4; Multichannel = 7; Duotone = 8; Lab = 9.", d))
+		return nil, errors.New(fmt.Sprintf("Wrong color mode: %d! Supported values are: Bitmap = 0; Grayscale = 1; Indexed = 2; RGB = 3; CMYK = 4; Multichannel = 7; Duotone = 8; Lab = 9.", c))
 	}
 	header.ColorMode = c
 
