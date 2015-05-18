@@ -1,2 +1,2 @@
 # gopsd
-PSD parser in Go
+## Photoshop document parser in Golang
