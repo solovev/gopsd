@@ -37,7 +37,7 @@ func (r *Reader) ReadInt32() (int32, error) {
 	return value, nil
 }
 
-func (r *Reader) Skip(n int) error {
+func (r *Reader) Skip(n int32) error {
 	if _, err := r.buf.Seek(int64(n), 1); err != nil {
 		return err
 	}
