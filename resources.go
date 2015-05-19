@@ -63,8 +63,6 @@ func newImageResources() (*ImageResourcesSection, error) {
 		block.DataSize = size
 		pos += 4
 
-		fmt.Println(uid, " - ", block.DataSize)
-
 		switch uid {
 		case 1062:
 			ps, err := newPrintScale()

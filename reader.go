@@ -60,6 +60,26 @@ func (r *Reader) ReadPascalString() (string, error) {
 	return string(value), nil
 }
 
+func (r *Reader) ReadRectangle() (*Rectangle, error) {
+	top, err := r.ReadInt32()
+	if err != nil {
+		return nil, err
+	}
+	left, err := r.ReadInt32()
+	if err != nil {
+		return nil, err
+	}
+	bottom, err := r.ReadInt32()
+	if err != nil {
+		return nil, err
+	}
+	right, err := r.ReadInt32()
+	if err != nil {
+		return nil, err
+	}
+	return &Rectangle{top, left, bottom, right}, nil
+}
+
 func (r *Reader) Skip(n int32) error {
 	if _, err := r.buf.Seek(int64(n), 1); err != nil {
 		return err
