@@ -6,7 +6,6 @@ import (
 )
 
 type HeaderSection struct {
-	Signature string
 	Version   int16
 	Channels  int16
 	Height    int32
@@ -25,7 +24,6 @@ func newHeader() (*HeaderSection, error) {
 	if sign != "8BPS" {
 		return nil, errors.New(fmt.Sprintf("Wrong document signature: %s!", sign))
 	}
-	header.Signature = sign
 
 	ver, err := reader.ReadInt16()
 	if err != nil {

@@ -6,16 +6,14 @@ import (
 )
 
 type ImageResourcesSection struct {
-	Length int32
 	Blocks map[int16]*IRBlock
 }
 
 type IRBlock struct {
-	Signature string
-	UID       int16
-	Name      string
-	DataSize  int32
-	Data      interface{}
+	UID      int16
+	Name     string
+	DataSize int32
+	Data     interface{}
 }
 
 func newImageResources() (*ImageResourcesSection, error) {
@@ -25,7 +23,6 @@ func newImageResources() (*ImageResourcesSection, error) {
 	if err != nil {
 		return nil, err
 	}
-	ir.Length = l
 	ir.Blocks = make(map[int16]*IRBlock)
 
 	pos := 0
@@ -39,7 +36,6 @@ func newImageResources() (*ImageResourcesSection, error) {
 		if sign != "8BIM" {
 			return nil, errors.New(fmt.Sprintf("Wrong block [%d] signature: %s! Expected: \"8BIM\".", len(ir.Blocks), sign))
 		}
-		block.Signature = sign
 		pos += 4
 
 		uid, err := reader.ReadInt16()

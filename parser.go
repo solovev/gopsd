@@ -3,9 +3,10 @@ package gopsd
 import "io/ioutil"
 
 type Document struct {
-	Header    *HeaderSection
-	ColorMode *ColorModeDataSection
-	Resources *ImageResourcesSection
+	Header       *HeaderSection
+	ColorMode    *ColorModeDataSection
+	Resources    *ImageResourcesSection
+	LayerAndMask *LayerAndMaskInfoSection
 }
 
 var (
@@ -38,6 +39,12 @@ func Parse(path string) (*Document, error) {
 		return nil, err
 	}
 	doc.Resources = ir
+
+	lam, err := newLayerAndMaskInfo()
+	if err != nil {
+		return nil, err
+	}
+	doc.LayerAndMask = lam
 
 	return doc, nil
 }
