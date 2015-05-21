@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"os"
+	"strings"
 )
 
 type Rectangle struct {
@@ -29,7 +30,7 @@ func IsValid(path string) (bool, error) {
 		return false, err
 	}
 	if string(b) != "8BPS" {
-		return false, errors.New("Wrong document signature!")
+		return false, errors.New("Wrong document signature.")
 	}
 
 	b = make([]byte, 2)
@@ -37,8 +38,10 @@ func IsValid(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if binary.BigEndian.Uint16(b) != 1 {
-		return false, errors.New("Wrong document version!")
+	ver := binary.BigEndian.Uint16(b)
+	if (strings.HasSuffix(path, "psd") && ver != 1) ||
+		(strings.HasSuffix(path, "psb") && ver != 2) {
+		return false, errors.New("Wrong document version.")
 	}
 	return true, nil
 }

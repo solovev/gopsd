@@ -1,8 +1,10 @@
 package gopsd
 
-import (
-	"errors"
-	"fmt"
+var (
+	ColorModes = map[int16]string{
+		0: "Bitmap", 1: "Grayscale", 2: "Indexed", 3: "RGB",
+		4: "CMYK", 7: "Multichannel", 8: "Duotune", 9: "Lab",
+	}
 )
 
 type HeaderSection struct {
@@ -14,75 +16,29 @@ type HeaderSection struct {
 	ColorMode int16
 }
 
-func newHeader() (*HeaderSection, error) {
+func newHeader() *HeaderSection {
 	header := new(HeaderSection)
 
-	sign, err := reader.ReadString32()
-	if err != nil {
-		return nil, err
-	}
-	if sign != "8BPS" {
-		return nil, errors.New(fmt.Sprintf("Wrong document signature: %s!", sign))
+	if reader.ReadString32() != "8BPS" {
+		panic("Wrong document signature.")
 	}
 
-	ver, err := reader.ReadInt16()
-	if err != nil {
-		return nil, err
-	}
-	if ver != 1 {
-		return nil, errors.New(fmt.Sprintf("Wrong document version: %d!", ver))
-	}
-	header.Version = ver
-
-	err = reader.Skip(6)
-	if err != nil {
-		return nil, err
+	header.Version = reader.ReadInt16()
+	if header.Version != 1 {
+		panic("Wrong document version.")
 	}
 
-	ch, err := reader.ReadInt16()
-	if err != nil {
-		return nil, err
-	}
-	if ch < 1 || ch > 56 {
-		return nil, errors.New(fmt.Sprintf("Wrong number of channels: %d! Supported range is 1 to 56.", ch))
-	}
-	header.Channels = ch
+	reader.Skip(6)
 
-	h, err := reader.ReadInt32()
-	if err != nil {
-		return nil, err
-	}
-	if h < 1 || h > 30000 {
-		return nil, errors.New(fmt.Sprintf("Wrong document height: %d! Supported range is 1 to 30000.", h))
-	}
-	header.Height = h
+	header.Channels = reader.ReadInt16()
+	header.Height = reader.ReadInt32()
+	header.Width = reader.ReadInt32()
+	header.Depth = reader.ReadInt16()
 
-	w, err := reader.ReadInt32()
-	if err != nil {
-		return nil, err
+	header.ColorMode = reader.ReadInt16()
+	if _, ok := ColorModes[header.ColorMode]; !ok {
+		panic("Unknown color mode.")
 	}
-	if w < 1 || w > 30000 {
-		return nil, errors.New(fmt.Sprintf("Wrong document width: %d! Supported range is 1 to 30000.", w))
-	}
-	header.Width = w
 
-	d, err := reader.ReadInt16()
-	if err != nil {
-		return nil, err
-	}
-	if d != 1 && d != 8 && d != 16 && d != 32 {
-		return nil, errors.New(fmt.Sprintf("Wrong document depth: %d! Supported values are 1, 8, 16 and 32.", d))
-	}
-	header.Depth = d
-
-	c, err := reader.ReadInt16()
-	if err != nil {
-		return nil, err
-	}
-	if c < 0 || c > 9 {
-		return nil, errors.New(fmt.Sprintf("Wrong color mode: %d! Supported values are: Bitmap = 0; Grayscale = 1; Indexed = 2; RGB = 3; CMYK = 4; Multichannel = 7; Duotone = 8; Lab = 9.", c))
-	}
-	header.ColorMode = c
-
-	return header, nil
+	return header
 }

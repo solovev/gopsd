@@ -13,84 +13,67 @@ func NewReader(b []byte) *Reader {
 	return &Reader{bytes.NewReader(b)}
 }
 
-func (r *Reader) ReadByte() (byte, error) {
+func (r *Reader) ReadByte() byte {
 	var value byte
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
-		return 0, err
+		panic(err)
 	}
-	return value, nil
+	return value
 }
 
-func (r *Reader) ReadString32() (string, error) {
+func (r *Reader) ReadString32() string {
 	value := make([]byte, 4)
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
-		return "", err
+		panic(err)
 	}
-	return string(value), nil
+	return string(value)
 }
 
-func (r *Reader) ReadInt16() (int16, error) {
+func (r *Reader) ReadInt16() int16 {
 	var value int16
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
-		return 0, err
+		panic(err)
 	}
-	return value, nil
+	return value
 }
 
-func (r *Reader) ReadInt32() (int32, error) {
+func (r *Reader) ReadInt32() int32 {
 	var value int32
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
-		return 0, err
+		panic(err)
 	}
-	return value, nil
+	return value
 }
 
-func (r *Reader) ReadFloat32() (float32, error) {
+func (r *Reader) ReadFloat32() float32 {
 	var value float32
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
-		return 0, err
+		panic(err)
 	}
-	return value, nil
+	return value
 }
 
-func (r *Reader) ReadPascalString() (string, error) {
+func (r *Reader) ReadPascalString() string {
 	var l byte
 	if err := binary.Read(r.buf, binary.BigEndian, &l); err != nil {
-		return "", err
+		panic(err)
 	}
 	if l%2 == 0 {
 		l = 1
 	}
 	value := make([]byte, l)
 	if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
-		return "", err
+		panic(err)
 	}
-	return string(value), nil
+	return string(value)
 }
 
-func (r *Reader) ReadRectangle() (*Rectangle, error) {
-	top, err := r.ReadInt32()
-	if err != nil {
-		return nil, err
-	}
-	left, err := r.ReadInt32()
-	if err != nil {
-		return nil, err
-	}
-	bottom, err := r.ReadInt32()
-	if err != nil {
-		return nil, err
-	}
-	right, err := r.ReadInt32()
-	if err != nil {
-		return nil, err
-	}
-	return &Rectangle{top, left, bottom, right}, nil
+func (r *Reader) ReadRectangle() *Rectangle {
+	return &Rectangle{r.ReadInt32(), r.ReadInt32(), r.ReadInt32(), r.ReadInt32()}
 }
 
-func (r *Reader) Skip(n int32) error {
+func (r *Reader) Skip(n int32) {
 	if _, err := r.buf.Seek(int64(n), 1); err != nil {
-		return err
+		panic(err)
 	}
-	return nil
 }

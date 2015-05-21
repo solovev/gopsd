@@ -1,50 +1,40 @@
 package gopsd
 
-import "io/ioutil"
+import (
+	"errors"
+	"io/ioutil"
+)
 
 type Document struct {
-	Header       *HeaderSection
-	ColorMode    *ColorModeDataSection
-	Resources    *ImageResourcesSection
-	LayerAndMask *LayerAndMaskInfoSection
+	Header *HeaderSection
 }
 
 var (
 	reader *Reader
 )
 
-func Parse(path string) (*Document, error) {
+func Parse(path string) (doc *Document, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch value := r.(type) {
+			case string:
+				err = errors.New(value)
+			case error:
+				err = value
+			}
+			doc = nil
+		}
+	}()
+
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
+
 	reader = NewReader(data)
 
-	doc := new(Document)
-
-	header, err := newHeader()
-	if err != nil {
-		return nil, err
-	}
-	doc.Header = header
-
-	cm, err := newColorMode(header.ColorMode)
-	if err != nil {
-		return nil, err
-	}
-	doc.ColorMode = cm
-
-	ir, err := newImageResources()
-	if err != nil {
-		return nil, err
-	}
-	doc.Resources = ir
-
-	lam, err := newLayerAndMaskInfo()
-	if err != nil {
-		return nil, err
-	}
-	doc.LayerAndMask = lam
+	doc = new(Document)
+	doc.Header = newHeader()
 
 	return doc, nil
 }
