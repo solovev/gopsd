@@ -6,7 +6,13 @@ import (
 )
 
 type Document struct {
-	Header *HeaderSection
+	IsLarge bool
+
+	Channels  int16
+	Height    int32
+	Width     int32
+	Depth     int16
+	ColorMode string
 }
 
 var (
@@ -30,11 +36,10 @@ func Parse(path string) (doc *Document, err error) {
 	if err != nil {
 		return nil, err
 	}
-
 	reader = NewReader(data)
 
 	doc = new(Document)
-	doc.Header = newHeader()
+	readHeader(doc)
 
 	return doc, nil
 }

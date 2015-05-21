@@ -13,7 +13,7 @@ func NewReader(b []byte) *Reader {
 	return &Reader{bytes.NewReader(b)}
 }
 
-func (r *Reader) ReadByte() byte {
+func (r Reader) ReadByte() byte {
 	var value byte
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
 		panic(err)
@@ -21,7 +21,7 @@ func (r *Reader) ReadByte() byte {
 	return value
 }
 
-func (r *Reader) ReadString32() string {
+func (r Reader) ReadString32() string {
 	value := make([]byte, 4)
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
 		panic(err)
@@ -29,7 +29,7 @@ func (r *Reader) ReadString32() string {
 	return string(value)
 }
 
-func (r *Reader) ReadInt16() int16 {
+func (r Reader) ReadInt16() int16 {
 	var value int16
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
 		panic(err)
@@ -37,7 +37,7 @@ func (r *Reader) ReadInt16() int16 {
 	return value
 }
 
-func (r *Reader) ReadInt32() int32 {
+func (r Reader) ReadInt32() int32 {
 	var value int32
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
 		panic(err)
@@ -45,7 +45,7 @@ func (r *Reader) ReadInt32() int32 {
 	return value
 }
 
-func (r *Reader) ReadFloat32() float32 {
+func (r Reader) ReadFloat32() float32 {
 	var value float32
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
 		panic(err)
@@ -53,7 +53,7 @@ func (r *Reader) ReadFloat32() float32 {
 	return value
 }
 
-func (r *Reader) ReadFloat64() float64 {
+func (r Reader) ReadFloat64() float64 {
 	var value float64
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
 		panic(err)
@@ -61,7 +61,7 @@ func (r *Reader) ReadFloat64() float64 {
 	return value
 }
 
-func (r *Reader) ReadPascalString() string {
+func (r Reader) ReadPascalString() string {
 	var l byte
 	if err := binary.Read(r.buf, binary.BigEndian, &l); err != nil {
 		panic(err)
@@ -76,11 +76,11 @@ func (r *Reader) ReadPascalString() string {
 	return string(value)
 }
 
-func (r *Reader) ReadRectangle() *Rectangle {
+func (r Reader) ReadRectangle() *Rectangle {
 	return &Rectangle{r.ReadInt32(), r.ReadInt32(), r.ReadInt32(), r.ReadInt32()}
 }
 
-func (r *Reader) Skip(n int32) {
+func (r Reader) Skip(n int32) {
 	if _, err := r.buf.Seek(int64(n), 1); err != nil {
 		panic(err)
 	}
