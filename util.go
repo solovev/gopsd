@@ -7,18 +7,6 @@ import (
 	"strings"
 )
 
-type Rectangle struct {
-	Top, Left, Bottom, Right int32
-}
-
-func (r *Rectangle) X() int32 {
-	return r.Left - r.Right
-}
-
-func (r *Rectangle) Y() int32 {
-	return r.Bottom - r.Top
-}
-
 func IsValid(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -44,4 +32,38 @@ func IsValid(path string) (bool, error) {
 		return false, errors.New("Wrong document version.")
 	}
 	return true, nil
+}
+
+func inRange(i interface{}, min, max int) bool {
+	val := getInteger(i)
+	if val >= min && val <= max {
+		return true
+	}
+
+	return false
+}
+
+func valueIs(i interface{}, numbers ...int) bool {
+	val := getInteger(i)
+	for n := range numbers {
+		if val == numbers[n] {
+			return true
+		}
+	}
+	return false
+}
+
+func getInteger(unk interface{}) int {
+	switch i := unk.(type) {
+	case int32:
+		return int(i)
+	case int16:
+		return int(i)
+	case byte:
+		return int(i)
+	case int:
+		return i
+	default:
+		return 0
+	}
 }

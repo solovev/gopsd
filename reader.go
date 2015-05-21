@@ -53,6 +53,14 @@ func (r *Reader) ReadFloat32() float32 {
 	return value
 }
 
+func (r *Reader) ReadFloat64() float64 {
+	var value float64
+	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
+		panic(err)
+	}
+	return value
+}
+
 func (r *Reader) ReadPascalString() string {
 	var l byte
 	if err := binary.Read(r.buf, binary.BigEndian, &l); err != nil {
