@@ -13,6 +13,8 @@ type Document struct {
 	Width     int32
 	Depth     int16
 	ColorMode string
+
+	Resources map[int16]*ImageResource
 }
 
 var (
@@ -40,6 +42,8 @@ func Parse(path string) (doc *Document, err error) {
 
 	doc = new(Document)
 	readHeader(doc)
+	readColorMode(doc)
+	readResources(doc)
 
 	return doc, nil
 }

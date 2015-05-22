@@ -69,11 +69,17 @@ func (r Reader) ReadPascalString() string {
 	if l%2 == 0 {
 		l = 1
 	}
-	value := make([]byte, l)
-	if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
-		panic(err)
+
+	if l == 1 {
+		reader.Skip(1)
+		return ""
+	} else {
+		value := make([]byte, l)
+		if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
+			panic(err)
+		}
+		return string(value)
 	}
-	return string(value)
 }
 
 func (r Reader) ReadRectangle() *Rectangle {
