@@ -50,6 +50,15 @@ func (r *Reader) ReadInt32() int32 {
 	return value
 }
 
+func (r *Reader) ReadInt64() int64 {
+	var value int64
+	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
+		panic(err)
+	}
+	r.Position += 8
+	return value
+}
+
 func (r *Reader) ReadFloat32() float32 {
 	var value float32
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
@@ -71,23 +80,17 @@ func (r *Reader) ReadFloat64() float64 {
 func (r *Reader) ReadPascalString() string {
 	var l byte
 	if err := binary.Read(r.buf, binary.BigEndian, &l); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
-	if l%2 == 0 {
+	if l == 0 {
 		l = 1
 	}
 	r.Position += int(l) + 1
-
-	if l == 1 {
-		reader.Skip(1)
-		return "?"
-	} else {
-		value := make([]byte, l)
-		if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
-			panic(err)
-		}
-		return string(value)
+	value := make([]byte, l)
+	if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
+		panic(err.Error())
 	}
+	return string(value)
 }
 
 func (r *Reader) ReadBytes(number interface{}) []byte {

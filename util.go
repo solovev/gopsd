@@ -53,6 +53,15 @@ func valueIs(i interface{}, numbers ...int) bool {
 	return false
 }
 
+func stringValueIs(value string, values ...string) bool {
+	for i := range values {
+		if value == values[i] {
+			return true
+		}
+	}
+	return false
+}
+
 func getInteger(unk interface{}) int {
 	switch i := unk.(type) {
 	case int32:
