@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 )
 
+// TODO all INT -> INT64 (**PSB**)
 type Document struct {
 	IsLarge bool
 

@@ -23,8 +23,7 @@ func readLayers(doc *Document) {
 	} else {
 		length = int64(reader.ReadInt32())
 	}
-	if length == 0 {
-	}
+	pos := reader.Position
 
 	var lengthLayers int64
 	if doc.IsLarge {
@@ -32,10 +31,7 @@ func readLayers(doc *Document) {
 	} else {
 		lengthLayers = int64(reader.ReadInt32())
 	}
-	//if lengthLayers%2 != 0 {
-	//	lengthLayers++
-	//}
-	lengthLayers = (lengthLayers + 1) & ^0x01
+	lengthLayers = lengthLayers + 1 & ^0x01
 
 	layerCount := reader.ReadInt16()
 	if layerCount < 0 {
@@ -63,7 +59,7 @@ func readLayers(doc *Document) {
 
 		sign := reader.ReadString32()
 		if sign != "8BIM" {
-			panic(fmt.Sprintf("Wrong blend mode signature of layer №%d.", i))
+			panic(fmt.Sprintf("Wrong blend mode signature of layer #%d.", i))
 		}
 
 		key := reader.ReadString32()
@@ -110,28 +106,44 @@ func readLayers(doc *Document) {
 			value.DestWhite = reader.ReadInt16()
 		}
 
+		// Name. Pascal string, padded to a multiple of 4 bytes
 		layer.Name = reader.ReadPascalString()
 		nameLength := len(layer.Name) + 1
 		if nameLength%4 != 0 {
-			skip := (((nameLength / 4) + 1) * 4) - nameLength
+			skip := 4 - nameLength%4
 			reader.Skip(skip)
 		}
 
 		// Additional information at the end of the layer
-		/*for reader.Position < int(extraLength)+extraPos {
+		layer.Data = make(map[string]interface{})
+		for reader.Position < int(extraLength)+extraPos {
 			sign = reader.ReadString32()
 			if sign != "8BIM" && sign != "8B64" {
-				panic(fmt.Sprintf("Wrong additional info signature of layer №%d", i))
+				panic(fmt.Sprintf("Wrong additional info #%d signature of layer #%d", len(layer.Data), i))
 			}
 			key = reader.ReadString32()
-			if doc.IsLarge && stringValueIs(key, "LMsk", "Lr16", "Lr32", "Layr", "Mt16", "Mt32", "Mtrn", "Alph", "FMsk", "lnk2", "FEid", "FXid", "PxSD") {
 
+			var dataLength int64
+			if doc.IsLarge && stringValueIs(key, "LMsk", "Lr16", "Lr32", "Layr", "Mt16", "Mt32", "Mtrn", "Alph", "FMsk", "lnk2", "FEid", "FXid", "PxSD") {
+				dataLength = reader.ReadInt64()
+			} else {
+				dataLength = int64(reader.ReadInt32())
 			}
-		}*/
+			dataLength = dataLength + 1 & ^0x01
+			dataPos := reader.Position
+
+			switch key {
+			default:
+				layer.Data[key] = nil
+				reader.Skip(dataLength)
+			}
+			reader.Skip(dataPos + int(dataLength) - reader.Position)
+		}
 		reader.Skip(int(extraLength) - (reader.Position - extraPos))
 
 		doc.Layers = append(doc.Layers, layer)
 	}
+	reader.Skip(pos + int(length) - reader.Position)
 }
 
 type Layer struct {
@@ -154,6 +166,8 @@ type Layer struct {
 	BlendingRanges []*LayerBlendingRanges
 
 	Name string
+
+	Data map[string]interface{}
 }
 
 type LayerChannel struct {

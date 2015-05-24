@@ -25,7 +25,7 @@ func readResources(doc *Document) {
 
 		sign := reader.ReadString32()
 		if sign != "8BIM" {
-			panic(fmt.Sprintf("Wrong signature of resource №%d!", len(doc.Resources)))
+			panic(fmt.Sprintf("Wrong signature of resource #%d!", len(doc.Resources)))
 		}
 
 		ir.Id = reader.ReadInt16()

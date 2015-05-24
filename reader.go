@@ -7,7 +7,7 @@ import (
 
 type Reader struct {
 	buf      *bytes.Reader
-	Position int
+	Position int // [CHECK] Must be int64?
 }
 
 func NewReader(b []byte) *Reader {
