@@ -143,6 +143,11 @@ func readLayers(doc *Document) {
 
 		doc.Layers = append(doc.Layers, layer)
 	}
+
+	for _, layer := range doc.Layers {
+
+	}
+
 	reader.Skip(pos + int(length) - reader.Position)
 }
 
@@ -162,12 +167,10 @@ type Layer struct {
 	MaskRealFlags  byte
 	MaskBackground byte
 
-	// [CHECK] Blending ranges data
+	// [CHECK] Blending ranges data, empty name
 	BlendingRanges []*LayerBlendingRanges
-
-	Name string
-
-	Data map[string]interface{}
+	Name           string
+	Data           map[string]interface{}
 }
 
 type LayerChannel struct {
