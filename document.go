@@ -15,7 +15,7 @@ type Document struct {
 	Depth     int16
 	ColorMode string
 
-	Resources map[int16]*ImageResource
+	Resources map[int16]interface{}
 	Layers    []*Layer
 }
 

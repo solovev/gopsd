@@ -7,20 +7,13 @@ import (
 	"image/jpeg"
 )
 
-type ImageResource struct {
-	Id   int16
-	Name string
-	Data interface{}
-}
-
 func readResources(doc *Document) {
 	length := reader.ReadInt32()
 
-	doc.Resources = make(map[int16]*ImageResource)
+	doc.Resources = make(map[int16]interface{})
 	startPos := 0
 
 	for startPos < int(length) {
-		ir := new(ImageResource)
 		pos := reader.Position
 
 		sign := reader.ReadString32()
@@ -28,14 +21,17 @@ func readResources(doc *Document) {
 			panic(fmt.Sprintf("Wrong signature of resource #%d!", len(doc.Resources)))
 		}
 
-		ir.Id = reader.ReadInt16()
-		ir.Name = reader.ReadPascalString()
+		id := reader.ReadInt16()
+		// Resource name [CHECK]
+		reader.ReadPascalString()
 
 		size := reader.ReadInt32()
 		dataPos := reader.Position
-		switch ir.Id {
+		switch id {
 		case 1033, 1036:
-			ir.Data = readResourceThumbnail(size)
+			doc.Resources[id] = readResourceThumbnail(size)
+		default:
+			doc.Resources[id] = nil
 		}
 		if size%2 != 0 {
 			size++
@@ -43,7 +39,6 @@ func readResources(doc *Document) {
 		reader.Skip(int(size) - (reader.Position - dataPos))
 
 		startPos += reader.Position - pos
-		doc.Resources[ir.Id] = ir
 	}
 }
 
