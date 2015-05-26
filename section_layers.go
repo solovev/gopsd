@@ -1,6 +1,11 @@
 package gopsd
 
-import "fmt"
+import (
+	"fmt"
+	"image"
+	"image/color"
+	"math"
+)
 
 var (
 	BlendModeKeys = map[string]string{
@@ -50,16 +55,16 @@ func readLayers(doc *Document) {
 
 			channel.Id = reader.ReadInt16()
 			if doc.IsLarge {
-				channel.DataLength = reader.ReadInt64()
+				channel.Length = reader.ReadInt64()
 			} else {
-				channel.DataLength = int64(reader.ReadInt32())
+				channel.Length = int64(reader.ReadInt32())
 			}
 			layer.Channels = append(layer.Channels, channel)
 		}
 
 		sign := reader.ReadString32()
 		if sign != "8BIM" {
-			panic(fmt.Sprintf("Wrong blend mode signature of layer #%d.", i))
+			panic(fmt.Sprintf("Wrong blend mode signature of layer [#%d].", i))
 		}
 
 		key := reader.ReadString32()
@@ -67,7 +72,7 @@ func readLayers(doc *Document) {
 			layer.BlendMode = mode
 		}
 
-		layer.Opacity = reader.ReadByte()
+		layer.Opacity = byte(math.Ceil(float64(reader.ReadByte()) / 255 * 100))
 		layer.Clipping = reader.ReadByte()
 		layer.Flags = reader.ReadByte()
 		reader.Skip(1) // Filler
@@ -119,7 +124,7 @@ func readLayers(doc *Document) {
 		for reader.Position < int(extraLength)+extraPos {
 			sign = reader.ReadString32()
 			if sign != "8BIM" && sign != "8B64" {
-				panic(fmt.Sprintf("Wrong additional info #%d signature of layer #%d", len(layer.Data), i))
+				panic(fmt.Sprintf("[Layer: %s] Wrong signature of additional info [#%d]", layer.Name, len(layer.Data)))
 			}
 			key = reader.ReadString32()
 
@@ -145,7 +150,43 @@ func readLayers(doc *Document) {
 	}
 
 	for _, layer := range doc.Layers {
+		width := int(layer.Rectangle.Width())
+		height := int(layer.Rectangle.Height())
 
+		data := make(map[int][]int8)
+		for i, channel := range layer.Channels {
+			compression := reader.ReadInt16()
+			switch compression {
+			case 0:
+				data[i] = reader.ReadUBytes(width * height)
+			case 1:
+				data[i] = reader.ReadRLECompression(width, height)
+			default:
+				panic(fmt.Sprintf("[Layer: %s] Unknown compression method of channel [id: %d]", layer.Name, channel.Id))
+			}
+		}
+
+		if width == 0 || height == 0 {
+			continue
+		}
+
+		image := image.NewRGBA(image.Rect(0, 0, width, height))
+		switch len(layer.Channels) {
+		case 3: // RGB
+			// [TODO]
+		case 4, 5:
+			for x := 0; x < width; x++ {
+				for y := 0; y < height; y++ {
+					i := x + (y * width)
+					red := byte(data[1][i])
+					green := byte(data[2][i])
+					blue := byte(data[3][i])
+					alpha := byte(data[0][i])
+					image.Set(x, y, color.RGBA{red, green, blue, alpha})
+				}
+			}
+		}
+		layer.Image = image
 	}
 
 	reader.Skip(pos + int(length) - reader.Position)
@@ -171,11 +212,13 @@ type Layer struct {
 	BlendingRanges []*LayerBlendingRanges
 	Name           string
 	Data           map[string]interface{}
+	Image          image.Image
 }
 
 type LayerChannel struct {
-	Id         int16
-	DataLength int64
+	Id int16
+	// [CHECK]
+	Length int64
 }
 
 type LayerBlendingRanges struct {

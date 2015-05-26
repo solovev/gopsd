@@ -1,9 +1,6 @@
 package gopsd
 
-import (
-	"errors"
-	"io/ioutil"
-)
+import "io/ioutil"
 
 // TODO all INT -> INT64 (**PSB**)
 type Document struct {
@@ -24,7 +21,7 @@ var (
 )
 
 func Parse(path string) (doc *Document, err error) {
-	defer func() {
+	/*defer func() {
 		if r := recover(); r != nil {
 			switch value := r.(type) {
 			case string:
@@ -35,7 +32,7 @@ func Parse(path string) (doc *Document, err error) {
 			doc = nil
 		}
 	}()
-
+	*/
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err

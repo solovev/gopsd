@@ -103,6 +103,16 @@ func (r *Reader) ReadBytes(number interface{}) []byte {
 	return value
 }
 
+func (r *Reader) ReadUBytes(number interface{}) []int8 {
+	n := getInteger(number)
+	value := make([]int8, n)
+	if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
+		panic(err)
+	}
+	r.Position += n
+	return value
+}
+
 func (r *Reader) ReadRectangle() *Rectangle {
 	r.Position += 16
 	return &Rectangle{r.ReadInt32(), r.ReadInt32(), r.ReadInt32(), r.ReadInt32()}
@@ -114,4 +124,40 @@ func (r *Reader) Skip(number interface{}) {
 	if _, err := r.buf.Seek(int64(n), 1); err != nil {
 		panic(err)
 	}
+}
+
+func (r *Reader) ReadRLECompression(width, height int) []int8 {
+	result := make([]int8, 0)
+
+	scanLines := make([]int16, height)
+	for i := range scanLines {
+		scanLines[i] = reader.ReadInt16()
+	}
+	for i := range scanLines {
+		data := reader.ReadUBytes(scanLines[i])
+		line := make([]int8, width)
+		wPos, rPos := 0, 0
+		for rPos < len(data) {
+			n := data[rPos]
+			rPos++
+			if n > 0 {
+				count := int(n) + 1
+				for j := 0; j < count; j++ {
+					line[wPos] = data[rPos]
+					wPos++
+					rPos++
+				}
+			} else {
+				b := data[rPos]
+				rPos++
+				count := int(-n) + 1
+				for j := 0; j < count; j++ {
+					line[wPos] = b
+					wPos++
+				}
+			}
+		}
+		result = append(result, line...)
+	}
+	return result
 }
