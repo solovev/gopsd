@@ -158,7 +158,7 @@ func readLayers(doc *Document) {
 			compression := reader.ReadInt16()
 			switch compression {
 			case 0:
-				data[i] = reader.ReadUBytes(width * height)
+				data[i] = reader.ReadSignedBytes(width * height)
 			case 1:
 				data[i] = reader.ReadRLECompression(width, height)
 			default:
@@ -188,7 +188,6 @@ func readLayers(doc *Document) {
 		}
 		layer.Image = image
 	}
-
 	reader.Skip(pos + int(length) - reader.Position)
 }
 
@@ -227,4 +226,12 @@ type LayerBlendingRanges struct {
 	SourceWhite int16
 	DestBlack   int16
 	DestWhite   int16
+}
+
+// [TODO] Not impl yet
+type GlobalLayerMask struct {
+	OverlayColorSpace int16
+	ColorComponents   []int16
+	Opacity           int16
+	Kind              byte
 }

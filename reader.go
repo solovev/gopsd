@@ -103,7 +103,7 @@ func (r *Reader) ReadBytes(number interface{}) []byte {
 	return value
 }
 
-func (r *Reader) ReadUBytes(number interface{}) []int8 {
+func (r *Reader) ReadSignedBytes(number interface{}) []int8 {
 	n := getInteger(number)
 	value := make([]int8, n)
 	if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
@@ -134,7 +134,7 @@ func (r *Reader) ReadRLECompression(width, height int) []int8 {
 		scanLines[i] = reader.ReadInt16()
 	}
 	for i := range scanLines {
-		data := reader.ReadUBytes(scanLines[i])
+		data := reader.ReadSignedBytes(scanLines[i])
 		line := make([]int8, width)
 		wPos, rPos := 0, 0
 		for rPos < len(data) {
