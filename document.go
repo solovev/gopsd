@@ -7,6 +7,7 @@ import (
 )
 
 // TODO all INT -> INT64 (**PSB**)
+// TODO make([]interface{}, 0) -> var name []interface{}
 type Document struct {
 	IsLarge bool
 

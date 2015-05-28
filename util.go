@@ -76,3 +76,29 @@ func getInteger(unk interface{}) int {
 		return 0
 	}
 }
+
+func unpackRLEBits(data []int8, length int) []int8 {
+	result := make([]int8, length)
+	wPos, rPos := 0, 0
+	for rPos < len(data) {
+		n := data[rPos]
+		rPos++
+		if n > 0 {
+			count := int(n) + 1
+			for j := 0; j < count; j++ {
+				result[wPos] = data[rPos]
+				wPos++
+				rPos++
+			}
+		} else {
+			b := data[rPos]
+			rPos++
+			count := int(-n) + 1
+			for j := 0; j < count; j++ {
+				result[wPos] = b
+				wPos++
+			}
+		}
+	}
+	return result
+}

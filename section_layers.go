@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/png"
 	"math"
+	"os"
 )
 
 var (
@@ -160,7 +162,16 @@ func readLayers(doc *Document) {
 			case 0:
 				data[i] = reader.ReadSignedBytes(width * height)
 			case 1:
-				data[i] = reader.ReadRLECompression(width, height)
+				result := make([]int8, 0)
+				scanLines := make([]int16, height)
+				for i := range scanLines {
+					scanLines[i] = reader.ReadInt16()
+				}
+				for i := range scanLines {
+					line := unpackRLEBits(reader.ReadSignedBytes(scanLines[i]), width)
+					result = append(result, line...)
+				}
+				data[i] = result
 			default:
 				panic(fmt.Sprintf("[Layer: %s] Unknown compression method of channel [id: %d]", layer.Name, channel.Id))
 			}
@@ -187,6 +198,10 @@ func readLayers(doc *Document) {
 			}
 		}
 		layer.Image = image
+
+		toimg, _ := os.Create("result.png")
+		defer toimg.Close()
+		png.Encode(toimg, layer.Image)
 	}
 	reader.Skip(int(length) - (reader.Position - pos))
 }

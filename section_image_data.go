@@ -1,64 +1,50 @@
 package gopsd
 
-import "fmt"
+import (
+	"image"
+	"image/color"
+)
 
 func readImageData(doc *Document) {
-	compression := reader.ReadInt16()
-	switch compression {
-	case 1: // RLE
-		byteCounts := make([]int16, int(doc.Channels)*int(doc.Height))
+	rle := reader.ReadInt16() == 1
+
+	width := int(doc.Width)
+	height := int(doc.Height)
+	channels := int(doc.Channels)
+
+	byteCounts := make([]int16, channels*height)
+	if rle {
 		for i := range byteCounts {
 			byteCounts[i] = reader.ReadInt16()
 		}
+	}
 
-		chanData := make(map[int][]int8)
-		for i := 0; i < int(doc.Channels); i++ {
-			chanId := 0
-			if i == 3 {
-				chanId = -i
-			} else {
-				chanId = i
-			}
-
-			data := make([]int8, 0)
-			index := i * int(doc.Height)
-			for j := 0; j < int(doc.Height); j++ {
+	chanData := make(map[int][]int8)
+	for i := 0; i < channels; i++ {
+		var data []int8
+		if rle {
+			index := i * height
+			for j := 0; j < height; j++ {
 				length := byteCounts[index]
 				index++
-				line := readRLE(reader.ReadSignedBytes(length), int(doc.Width))
+				line := unpackRLEBits(reader.ReadSignedBytes(length), width)
 				data = append(data, line...)
 			}
-			fmt.Println(len(data), data[0], data[len(data)-1])
-			chanData[chanId] = data
-		}
-	default:
-		panic("Unknown compression of image data.")
-	}
-
-}
-
-func readRLE(data []int8, length int) []int8 {
-	result := make([]int8, length)
-	wPos, rPos := 0, 0
-	for rPos < len(data) {
-		n := data[rPos]
-		rPos++
-		if n > 0 {
-			count := int(n) + 1
-			for j := 0; j < count; j++ {
-				result[wPos] = data[rPos]
-				wPos++
-				rPos++
-			}
 		} else {
-			b := data[rPos]
-			rPos++
-			count := int(-n) + 1
-			for j := 0; j < count; j++ {
-				result[wPos] = b
-				wPos++
-			}
+			data = reader.ReadSignedBytes(width * height)
+		}
+		chanData[i] = data
+	}
+
+	image := image.NewRGBA(image.Rect(0, 0, width, height))
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			i := x + (y * width)
+			red := byte(chanData[0][i])
+			green := byte(chanData[1][i])
+			blue := byte(chanData[2][i])
+			image.Set(x, y, color.RGBA{red, green, blue, 255})
 		}
 	}
-	return result
+	doc.Image = image
 }

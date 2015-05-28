@@ -133,39 +133,3 @@ func (r *Reader) Skip(number interface{}) {
 		panic(err)
 	}
 }
-
-func (r *Reader) ReadRLECompression(width, height int) []int8 {
-	result := make([]int8, 0)
-
-	scanLines := make([]int16, height)
-	for i := range scanLines {
-		scanLines[i] = reader.ReadInt16()
-	}
-	for i := range scanLines {
-		data := reader.ReadSignedBytes(scanLines[i])
-		line := make([]int8, width)
-		wPos, rPos := 0, 0
-		for rPos < len(data) {
-			n := data[rPos]
-			rPos++
-			if n > 0 {
-				count := int(n) + 1
-				for j := 0; j < count; j++ {
-					line[wPos] = data[rPos]
-					wPos++
-					rPos++
-				}
-			} else {
-				b := data[rPos]
-				rPos++
-				count := int(-n) + 1
-				for j := 0; j < count; j++ {
-					line[wPos] = b
-					wPos++
-				}
-			}
-		}
-		result = append(result, line...)
-	}
-	return result
-}
