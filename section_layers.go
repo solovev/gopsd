@@ -62,12 +62,12 @@ func readLayers(doc *Document) {
 			layer.Channels = append(layer.Channels, channel)
 		}
 
-		sign := reader.ReadString32()
+		sign := reader.ReadString(4)
 		if sign != "8BIM" {
 			panic(fmt.Sprintf("Wrong blend mode signature of layer [#%d].", i))
 		}
 
-		key := reader.ReadString32()
+		key := reader.ReadString(4)
 		if mode, ok := BlendModeKeys[key]; ok {
 			layer.BlendMode = mode
 		}
@@ -122,11 +122,11 @@ func readLayers(doc *Document) {
 		// Additional information at the end of the layer
 		layer.Data = make(map[string]interface{})
 		for reader.Position < int(extraLength)+extraPos {
-			sign = reader.ReadString32()
+			sign = reader.ReadString(4)
 			if sign != "8BIM" && sign != "8B64" {
 				panic(fmt.Sprintf("[Layer: %s] Wrong signature of additional info [#%d]", layer.Name, len(layer.Data)))
 			}
-			key = reader.ReadString32()
+			key = reader.ReadString(4)
 
 			var dataLength int64
 			if doc.IsLarge && stringValueIs(key, "LMsk", "Lr16", "Lr32", "Layr", "Mt16", "Mt32", "Mtrn", "Alph", "FMsk", "lnk2", "FEid", "FXid", "PxSD") {
@@ -144,8 +144,8 @@ func readLayers(doc *Document) {
 			}
 			reader.Skip(dataPos + int(dataLength) - reader.Position)
 		}
+		// [CHECK] Not needed
 		reader.Skip(int(extraLength) - (reader.Position - extraPos))
-
 		doc.Layers = append(doc.Layers, layer)
 	}
 
@@ -188,7 +188,7 @@ func readLayers(doc *Document) {
 		}
 		layer.Image = image
 	}
-	reader.Skip(pos + int(length) - reader.Position)
+	reader.Skip(int(length) - (reader.Position - pos))
 }
 
 type Layer struct {

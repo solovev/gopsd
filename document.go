@@ -1,6 +1,10 @@
 package gopsd
 
-import "io/ioutil"
+import (
+	"errors"
+	"image"
+	"io/ioutil"
+)
 
 // TODO all INT -> INT64 (**PSB**)
 type Document struct {
@@ -11,6 +15,7 @@ type Document struct {
 	Width     int32
 	Depth     int16
 	ColorMode string
+	Image     image.Image
 
 	Resources map[int16]interface{}
 	Layers    []*Layer
@@ -21,7 +26,7 @@ var (
 )
 
 func Parse(path string) (doc *Document, err error) {
-	/*defer func() {
+	defer func() {
 		if r := recover(); r != nil {
 			switch value := r.(type) {
 			case string:
@@ -32,7 +37,7 @@ func Parse(path string) (doc *Document, err error) {
 			doc = nil
 		}
 	}()
-	*/
+
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -44,6 +49,7 @@ func Parse(path string) (doc *Document, err error) {
 	readColorMode(doc)
 	readResources(doc)
 	readLayers(doc)
+	readImageData(doc)
 
 	return doc, nil
 }

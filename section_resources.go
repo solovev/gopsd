@@ -16,7 +16,7 @@ func readResources(doc *Document) {
 	for startPos < int(length) {
 		pos := reader.Position
 
-		sign := reader.ReadString32()
+		sign := reader.ReadString(4)
 		if sign != "8BIM" {
 			panic(fmt.Sprintf("Wrong signature of resource #%d!", len(doc.Resources)))
 		}

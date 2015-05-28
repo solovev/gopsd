@@ -3,6 +3,7 @@ package gopsd
 import (
 	"bytes"
 	"encoding/binary"
+	"unicode/utf16"
 )
 
 type Reader struct {
@@ -23,12 +24,12 @@ func (r *Reader) ReadByte() byte {
 	return value
 }
 
-func (r *Reader) ReadString32() string {
-	value := make([]byte, 4)
+func (r *Reader) ReadString(n int) string {
+	value := make([]byte, n)
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
 		panic(err)
 	}
-	r.Position += 4
+	r.Position += n
 	return string(value)
 }
 
@@ -78,19 +79,27 @@ func (r *Reader) ReadFloat64() float64 {
 }
 
 func (r *Reader) ReadPascalString() string {
-	var l byte
-	if err := binary.Read(r.buf, binary.BigEndian, &l); err != nil {
-		panic(err.Error())
+	var length byte
+	if err := binary.Read(r.buf, binary.BigEndian, &length); err != nil {
+		panic(err)
 	}
-	if l == 0 {
-		l = 1
+	if length == 0 {
+		length = 1
 	}
-	r.Position += int(l) + 1
-	value := make([]byte, l)
-	if err := binary.Read(r.buf, binary.BigEndian, value); err != nil {
-		panic(err.Error())
+	r.Position += 1
+	return r.ReadString(int(length))
+}
+
+func (r *Reader) ReadUnicodeString() string {
+	n := reader.ReadInt32()
+	array := make([]uint16, n)
+	for i := range array {
+		if err := binary.Read(r.buf, binary.BigEndian, &array[i]); err != nil {
+			panic(err)
+		}
+		r.Position += 2
 	}
-	return string(value)
+	return string(utf16.Decode(array))
 }
 
 func (r *Reader) ReadBytes(number interface{}) []byte {
@@ -114,7 +123,6 @@ func (r *Reader) ReadSignedBytes(number interface{}) []int8 {
 }
 
 func (r *Reader) ReadRectangle() *Rectangle {
-	r.Position += 16
 	return &Rectangle{r.ReadInt32(), r.ReadInt32(), r.ReadInt32(), r.ReadInt32()}
 }
 

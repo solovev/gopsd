@@ -8,7 +8,7 @@ var (
 )
 
 func readHeader(doc *Document) {
-	if reader.ReadString32() != "8BPS" {
+	if reader.ReadString(4) != "8BPS" {
 		panic("Wrong document signature.")
 	}
 
