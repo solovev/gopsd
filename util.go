@@ -1,6 +1,7 @@
 package gopsd
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"os"
@@ -101,4 +102,24 @@ func unpackRLEBits(data []int8, length int) []int8 {
 		}
 	}
 	return result
+}
+
+type StringMixer struct {
+	buffer bytes.Buffer
+}
+
+func (s *StringMixer) Add(values ...string) *StringMixer {
+	for _, value := range values {
+		s.buffer.WriteString(value)
+	}
+	return s
+}
+
+func (s *StringMixer) NewLine() *StringMixer {
+	s.buffer.WriteString("\n")
+	return s
+}
+
+func (s *StringMixer) String() string {
+	return s.buffer.String()
 }

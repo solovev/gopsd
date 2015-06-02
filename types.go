@@ -1,6 +1,9 @@
 package gopsd
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 type Descriptor struct {
 	Name  string
@@ -170,11 +173,25 @@ func newDescriptorOffset() *DescriptorOffset {
 	return offset
 }
 
-func (d Descriptor) Print() string {
-	//for k, v := range d.Items {
+func (d Descriptor) String() string {
+	var buffer bytes.Buffer
 
-	//}
-	return ""
+	buffer.WriteString(d.Class)
+	buffer.WriteString("\n{\n")
+	for _, v := range d.Items {
+		switch v.Type {
+		case "Objc", "GlbO":
+			if descr, ok := v.Value.(*Descriptor); ok {
+				buffer.WriteString(descr.String())
+			}
+		default:
+			buffer.WriteString(v.Type)
+			buffer.WriteString(": ")
+			buffer.WriteString(v.Key)
+		}
+	}
+	buffer.WriteString("\n}")
+	return buffer.String()
 }
 
 type Rectangle struct {
