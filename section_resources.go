@@ -29,7 +29,9 @@ func readResources(doc *Document) {
 		dataPos := reader.Position
 		switch id {
 		case 1033, 1036:
-			doc.Resources[id] = readResourceThumbnail(size)
+			doc.Resources[id] = readResourceThumbnail()
+		case 1083:
+			doc.Resources[id] = readResourcePrintStyle()
 		default:
 			doc.Resources[id] = nil
 		}
@@ -49,7 +51,7 @@ type IRThumbnail struct {
 }
 
 // http://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_74450
-func readResourceThumbnail(size int32) *IRThumbnail {
+func readResourceThumbnail() *IRThumbnail {
 	thumb := new(IRThumbnail)
 
 	format := reader.ReadInt32()
@@ -75,4 +77,20 @@ func readResourceThumbnail(size int32) *IRThumbnail {
 	}
 
 	return thumb
+}
+
+type IRPrintStyle struct {
+	DescriptorVersion int32
+	Descriptor        *Descriptor
+}
+
+func readResourcePrintStyle() *IRPrintStyle {
+	style := new(IRPrintStyle)
+
+	style.DescriptorVersion = reader.ReadInt32()
+	if style.DescriptorVersion == 16 {
+		style.Descriptor = newDescriptor()
+	}
+
+	return style
 }

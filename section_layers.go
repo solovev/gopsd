@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"math"
-	"os"
 )
 
 var (
@@ -49,7 +47,7 @@ func readLayers(doc *Document) {
 	for i := 0; i < int(layerCount); i++ {
 		layer := new(Layer)
 
-		layer.Rectangle = reader.ReadRectangle()
+		layer.Rectangle = newRectangle()
 
 		chanCount := reader.ReadInt16()
 		for j := 0; j < int(chanCount); j++ {
@@ -85,7 +83,7 @@ func readLayers(doc *Document) {
 		// Mask data
 		size := reader.ReadInt32()
 		if size != 0 {
-			layer.EnclosingMasks = append(layer.EnclosingMasks, reader.ReadRectangle())
+			layer.EnclosingMasks = append(layer.EnclosingMasks, newRectangle())
 			layer.DefaultColor = reader.ReadByte()
 			layer.MaskFlags = reader.ReadByte()
 			if size == 20 {
@@ -93,7 +91,7 @@ func readLayers(doc *Document) {
 			} else {
 				layer.MaskRealFlags = reader.ReadByte()
 				layer.MaskBackground = reader.ReadByte()
-				layer.EnclosingMasks = append(layer.EnclosingMasks, reader.ReadRectangle())
+				layer.EnclosingMasks = append(layer.EnclosingMasks, newRectangle())
 			}
 		}
 
@@ -198,10 +196,6 @@ func readLayers(doc *Document) {
 			}
 		}
 		layer.Image = image
-
-		toimg, _ := os.Create("result.png")
-		defer toimg.Close()
-		png.Encode(toimg, layer.Image)
 	}
 	reader.Skip(int(length) - (reader.Position - pos))
 }

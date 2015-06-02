@@ -102,6 +102,14 @@ func (r *Reader) ReadUnicodeString() string {
 	return string(utf16.Decode(array))
 }
 
+func (r *Reader) ReadDynamicString() string {
+	length := int(reader.ReadInt32())
+	if length == 0 {
+		length = 4
+	}
+	return reader.ReadString(length)
+}
+
 func (r *Reader) ReadBytes(number interface{}) []byte {
 	n := getInteger(number)
 	value := make([]byte, n)
@@ -120,10 +128,6 @@ func (r *Reader) ReadSignedBytes(number interface{}) []int8 {
 	}
 	r.Position += n
 	return value
-}
-
-func (r *Reader) ReadRectangle() *Rectangle {
-	return &Rectangle{r.ReadInt32(), r.ReadInt32(), r.ReadInt32(), r.ReadInt32()}
 }
 
 func (r *Reader) Skip(number interface{}) {
