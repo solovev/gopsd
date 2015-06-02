@@ -179,6 +179,7 @@ func (d Descriptor) String(indent int) string {
 		sm.Add("[", item.Type, "] ", item.Key, ": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
+			sm.Add(stringList(value, sm.Indent))
 		case *Descriptor:
 			sm.Add(value.String(sm.Indent))
 		case float64, int32, bool:
@@ -217,6 +218,7 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 		sm.Add("[", item.Type, "] ", item.Key, ": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
+			sm.Add(stringList(value, sm.Indent))
 		case *Descriptor:
 			sm.Add(value.String(sm.Indent))
 		case float64, int32, bool:
