@@ -1,9 +1,6 @@
 package gopsd
 
-import (
-	"bytes"
-	"fmt"
-)
+import "fmt"
 
 type Descriptor struct {
 	Name  string
@@ -173,25 +170,80 @@ func newDescriptorOffset() *DescriptorOffset {
 	return offset
 }
 
-func (d Descriptor) String() string {
-	var buffer bytes.Buffer
+func (d Descriptor) String(indent int) string {
+	sm := newStringMixer(indent)
 
-	buffer.WriteString(d.Class)
-	buffer.WriteString("\n{\n")
-	for _, v := range d.Items {
-		switch v.Type {
-		case "Objc", "GlbO":
-			if descr, ok := v.Value.(*Descriptor); ok {
-				buffer.WriteString(descr.String())
-			}
+	sm.Add("Descriptor: ", d.Class).NewLine().Add("{")
+	sm.Indent++
+	for _, item := range d.Items {
+		sm.Add("[", item.Type, "] ", item.Key, ": ")
+		switch value := item.Value.(type) {
+		case map[string]*DescriptorEntity: // Reference, List
+		case *Descriptor:
+			sm.Add(value.String(sm.Indent))
+		case float64, int32, bool:
+			sm.Add(fmt.Sprint(value))
+		case *DescriptorUnitFloat:
+			sm.Add("[Type: ", value.Type, ", Value: ", fmt.Sprint(value.Value), "]")
+		case string:
+			sm.Add(value)
+		case *DescriptorEnum:
+			sm.Add("[Type: ", value.Type, ", Enum: ", value.Enum, "]")
+		case *DescriptorClass:
+			sm.Add("[Name: ", value.Name, ", Class: ", value.Class, "]")
+		case *DescriptorProperty:
+			sm.Add("[Key: ", value.Key, " Name: ", value.Name, ", Class: ", value.Class, "]")
+		case *DescriptorOffset:
+			sm.Add("[Name: ", value.Name, ", Class: ", value.Class, " Value: ", fmt.Sprint(value.Value), "]")
+		case *DescriptorReferenceEnum:
+			sm.Add("[Type: ", value.Type, ", Enum: ", value.Enum, ", Class: ", value.Class, " Name: ", value.Name, "]")
 		default:
-			buffer.WriteString(v.Type)
-			buffer.WriteString(": ")
-			buffer.WriteString(v.Key)
+			sm.Add("?")
 		}
+		sm.NewLine()
 	}
-	buffer.WriteString("\n}")
-	return buffer.String()
+	sm.Indent--
+	sm.NewLine().Add("}")
+
+	return sm.String()
+}
+
+func stringList(items map[string]*DescriptorEntity, indent int) string {
+	sm := newStringMixer(indent)
+
+	sm.Add("List").NewLine().Add("{")
+	sm.Indent++
+	for _, item := range items {
+		sm.Add("[", item.Type, "] ", item.Key, ": ")
+		switch value := item.Value.(type) {
+		case map[string]*DescriptorEntity: // Reference, List
+		case *Descriptor:
+			sm.Add(value.String(sm.Indent))
+		case float64, int32, bool:
+			sm.Add(fmt.Sprint(value))
+		case *DescriptorUnitFloat:
+			sm.Add("[Type: ", value.Type, ", Value: ", fmt.Sprint(value.Value), "]")
+		case string:
+			sm.Add(value)
+		case *DescriptorEnum:
+			sm.Add("[Type: ", value.Type, ", Enum: ", value.Enum, "]")
+		case *DescriptorClass:
+			sm.Add("[Name: ", value.Name, ", Class: ", value.Class, "]")
+		case *DescriptorProperty:
+			sm.Add("[Key: ", value.Key, " Name: ", value.Name, ", Class: ", value.Class, "]")
+		case *DescriptorOffset:
+			sm.Add("[Name: ", value.Name, ", Class: ", value.Class, " Value: ", fmt.Sprint(value.Value), "]")
+		case *DescriptorReferenceEnum:
+			sm.Add("[Type: ", value.Type, ", Enum: ", value.Enum, ", Class: ", value.Class, " Name: ", value.Name, "]")
+		default:
+			sm.Add("?")
+		}
+		sm.NewLine()
+	}
+	sm.Indent--
+	sm.NewLine().Add("}")
+
+	return sm.String()
 }
 
 type Rectangle struct {
