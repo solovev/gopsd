@@ -4,6 +4,8 @@ import (
 	"errors"
 	"image"
 	"io/ioutil"
+
+	"github.com/solovev/gopsd/util"
 )
 
 // TODO all INT -> INT64 (**PSB**)
@@ -23,7 +25,7 @@ type Document struct {
 }
 
 var (
-	reader *Reader
+	reader *util.Reader
 )
 
 func Parse(path string) (doc *Document, err error) {
@@ -43,7 +45,7 @@ func Parse(path string) (doc *Document, err error) {
 	if err != nil {
 		return nil, err
 	}
-	reader = NewReader(data)
+	reader = util.NewReader(data)
 
 	doc = new(Document)
 	readHeader(doc)

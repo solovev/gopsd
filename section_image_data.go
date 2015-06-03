@@ -3,6 +3,8 @@ package gopsd
 import (
 	"image"
 	"image/color"
+
+	"github.com/solovev/gopsd/util"
 )
 
 func readImageData(doc *Document) {
@@ -27,7 +29,7 @@ func readImageData(doc *Document) {
 			for j := 0; j < height; j++ {
 				length := byteCounts[index]
 				index++
-				line := unpackRLEBits(reader.ReadSignedBytes(length), width)
+				line := util.UnpackRLEBits(reader.ReadSignedBytes(length), width)
 				data = append(data, line...)
 			}
 		} else {

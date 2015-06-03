@@ -1,14 +1,13 @@
-package gopsd
+package util
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"os"
 	"strings"
 )
 
-func IsValid(path string) (bool, error) {
+func IsDocumentValid(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return false, err
@@ -35,7 +34,7 @@ func IsValid(path string) (bool, error) {
 	return true, nil
 }
 
-func inRange(i interface{}, min, max int) bool {
+func InRange(i interface{}, min, max int) bool {
 	val := getInteger(i)
 	if val >= min && val <= max {
 		return true
@@ -44,7 +43,7 @@ func inRange(i interface{}, min, max int) bool {
 	return false
 }
 
-func valueIs(i interface{}, numbers ...int) bool {
+func ValueIs(i interface{}, numbers ...int) bool {
 	val := getInteger(i)
 	for n := range numbers {
 		if val == numbers[n] {
@@ -54,7 +53,7 @@ func valueIs(i interface{}, numbers ...int) bool {
 	return false
 }
 
-func stringValueIs(value string, values ...string) bool {
+func StringValueIs(value string, values ...string) bool {
 	for i := range values {
 		if value == values[i] {
 			return true
@@ -78,7 +77,7 @@ func getInteger(unk interface{}) int {
 	}
 }
 
-func unpackRLEBits(data []int8, length int) []int8 {
+func UnpackRLEBits(data []int8, length int) []int8 {
 	result := make([]int8, length)
 	wPos, rPos := 0, 0
 	for rPos < len(data) {
@@ -102,35 +101,4 @@ func unpackRLEBits(data []int8, length int) []int8 {
 		}
 	}
 	return result
-}
-
-type StringMixer struct {
-	buffer bytes.Buffer
-}
-
-func newStringMixer() *StringMixer {
-	sm := new(StringMixer)
-	return sm
-}
-
-func (s *StringMixer) Add(values ...string) *StringMixer {
-	for _, value := range values {
-		s.buffer.WriteString(value)
-	}
-	return s
-}
-
-func (s *StringMixer) AddIndent(value int) *StringMixer {
-	for i := 0; i < value; i++ {
-		s.buffer.WriteString("    ")
-	}
-	return s
-}
-
-func (s *StringMixer) NewLine() {
-	s.buffer.WriteString("\n")
-}
-
-func (s *StringMixer) String() string {
-	return s.buffer.String()
 }

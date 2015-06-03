@@ -1,4 +1,4 @@
-package gopsd
+package util
 
 import (
 	"bytes"
@@ -91,7 +91,7 @@ func (r *Reader) ReadPascalString() string {
 }
 
 func (r *Reader) ReadUnicodeString() string {
-	n := reader.ReadInt32()
+	n := r.ReadInt32()
 	array := make([]uint16, n)
 	for i := range array {
 		if err := binary.Read(r.buf, binary.BigEndian, &array[i]); err != nil {
@@ -103,11 +103,11 @@ func (r *Reader) ReadUnicodeString() string {
 }
 
 func (r *Reader) ReadDynamicString() string {
-	length := int(reader.ReadInt32())
+	length := int(r.ReadInt32())
 	if length == 0 {
 		length = 4
 	}
-	return reader.ReadString(length)
+	return r.ReadString(length)
 }
 
 func (r *Reader) ReadBytes(number interface{}) []byte {

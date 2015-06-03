@@ -1,4 +1,4 @@
-package gopsd
+package util
 
 import "fmt"
 
@@ -48,38 +48,38 @@ type DescriptorOffset struct {
 	Value int32
 }
 
-func newDescriptor() *Descriptor {
+func NewDescriptor(reader *Reader) *Descriptor {
 	value := new(Descriptor)
 
 	value.Name = reader.ReadUnicodeString()
 	value.Class = reader.ReadDynamicString()
-	value.Items = newDescriptorList()
+	value.Items = newDescriptorList(reader)
 
 	return value
 }
 
-func newDescriptorUnitFloat() *DescriptorUnitFloat {
+func newDescriptorUnitFloat(reader *Reader) *DescriptorUnitFloat {
 	unit := new(DescriptorUnitFloat)
 	unit.Type = reader.ReadString(4)
 	unit.Value = reader.ReadFloat64()
 	return unit
 }
 
-func newDescriptorClass() *DescriptorClass {
+func newDescriptorClass(reader *Reader) *DescriptorClass {
 	class := new(DescriptorClass)
 	class.Name = reader.ReadUnicodeString()
 	class.Class = reader.ReadDynamicString()
 	return class
 }
 
-func newDescriptorEnum() *DescriptorEnum {
+func newDescriptorEnum(reader *Reader) *DescriptorEnum {
 	enum := new(DescriptorEnum)
 	enum.Type = reader.ReadDynamicString()
 	enum.Enum = reader.ReadDynamicString()
 	return enum
 }
 
-func newDescriptorList() map[string]*DescriptorEntity {
+func newDescriptorList(reader *Reader) map[string]*DescriptorEntity {
 	value := make(map[string]*DescriptorEntity)
 	count := reader.ReadInt32()
 	for i := 0; i < int(count); i++ {
@@ -88,25 +88,25 @@ func newDescriptorList() map[string]*DescriptorEntity {
 		entity.Type = reader.ReadString(4)
 		switch entity.Type {
 		case "obj ":
-			entity.Value = newDescriptorReference()
+			entity.Value = newDescriptorReference(reader)
 		case "Objc", "GlbO":
-			entity.Value = newDescriptor()
+			entity.Value = NewDescriptor(reader)
 		case "VlLs":
-			entity.Value = newDescriptorList()
+			entity.Value = newDescriptorList(reader)
 		case "doub":
 			entity.Value = reader.ReadFloat64()
 		case "UntF":
-			entity.Value = newDescriptorUnitFloat()
+			entity.Value = newDescriptorUnitFloat(reader)
 		case "TEXT":
 			entity.Value = reader.ReadUnicodeString()
 		case "enum":
-			entity.Value = newDescriptorEnum()
+			entity.Value = newDescriptorEnum(reader)
 		case "long":
 			entity.Value = reader.ReadInt32()
 		case "bool":
 			entity.Value = reader.ReadByte() == 1
 		case "type", "GlbC":
-			entity.Value = newDescriptorClass()
+			entity.Value = newDescriptorClass(reader)
 		case "alis": // TODO
 			reader.Skip(reader.ReadInt32())
 		case "tdta": // TODO
@@ -119,7 +119,7 @@ func newDescriptorList() map[string]*DescriptorEntity {
 	return value
 }
 
-func newDescriptorReference() map[string]*DescriptorEntity {
+func newDescriptorReference(reader *Reader) map[string]*DescriptorEntity {
 	value := make(map[string]*DescriptorEntity)
 	count := reader.ReadInt32()
 	for i := 0; i < int(count); i++ {
@@ -127,13 +127,13 @@ func newDescriptorReference() map[string]*DescriptorEntity {
 		entity.Type = reader.ReadString(4)
 		switch entity.Type {
 		case "prop":
-			entity.Value = newDescriptorProperty()
+			entity.Value = newDescriptorProperty(reader)
 		case "Clss":
-			entity.Value = newDescriptorClass()
+			entity.Value = newDescriptorClass(reader)
 		case "Enmr":
-			entity.Value = newDescriptorReferenceEnum()
+			entity.Value = newDescriptorReferenceEnum(reader)
 		case "rele":
-			entity.Value = newDescriptorOffset()
+			entity.Value = newDescriptorOffset(reader)
 		case "Idnt":
 		case "indx":
 		case "name":
@@ -145,7 +145,7 @@ func newDescriptorReference() map[string]*DescriptorEntity {
 	return value
 }
 
-func newDescriptorProperty() *DescriptorProperty {
+func newDescriptorProperty(reader *Reader) *DescriptorProperty {
 	property := new(DescriptorProperty)
 	property.Name = reader.ReadUnicodeString()
 	property.Class = reader.ReadDynamicString()
@@ -153,7 +153,7 @@ func newDescriptorProperty() *DescriptorProperty {
 	return property
 }
 
-func newDescriptorReferenceEnum() *DescriptorReferenceEnum {
+func newDescriptorReferenceEnum(reader *Reader) *DescriptorReferenceEnum {
 	enum := new(DescriptorReferenceEnum)
 	enum.Name = reader.ReadUnicodeString()
 	enum.Class = reader.ReadDynamicString()
@@ -162,7 +162,7 @@ func newDescriptorReferenceEnum() *DescriptorReferenceEnum {
 	return enum
 }
 
-func newDescriptorOffset() *DescriptorOffset {
+func newDescriptorOffset(reader *Reader) *DescriptorOffset {
 	offset := new(DescriptorOffset)
 	offset.Name = reader.ReadUnicodeString()
 	offset.Class = reader.ReadDynamicString()
@@ -171,7 +171,7 @@ func newDescriptorOffset() *DescriptorOffset {
 }
 
 func (d Descriptor) String(indent int) string {
-	sm := newStringMixer()
+	sm := new(StringMixer)
 
 	sm.AddIndent(indent).Add("Descriptor [", fmt.Sprint(len(d.Items)), "]: ", d.Class).NewLine()
 	sm.AddIndent(indent).Add("{").NewLine()
@@ -182,7 +182,7 @@ func (d Descriptor) String(indent int) string {
 }
 
 func stringList(items map[string]*DescriptorEntity, indent int) string {
-	sm := newStringMixer()
+	sm := new(StringMixer)
 
 	for _, item := range items {
 		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
@@ -244,6 +244,6 @@ func (r Rectangle) Height() int32 {
 	return r.bottom - r.top
 }
 
-func newRectangle() *Rectangle {
+func NewRectangle(reader *Reader) *Rectangle {
 	return &Rectangle{reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()}
 }

@@ -5,6 +5,8 @@ import (
 	"image"
 	"image/color"
 	"math"
+
+	"github.com/solovev/gopsd/util"
 )
 
 var (
@@ -47,7 +49,7 @@ func readLayers(doc *Document) {
 	for i := 0; i < int(layerCount); i++ {
 		layer := new(Layer)
 
-		layer.Rectangle = newRectangle()
+		layer.Rectangle = util.NewRectangle(reader)
 
 		chanCount := reader.ReadInt16()
 		for j := 0; j < int(chanCount); j++ {
@@ -83,7 +85,7 @@ func readLayers(doc *Document) {
 		// Mask data
 		size := reader.ReadInt32()
 		if size != 0 {
-			layer.EnclosingMasks = append(layer.EnclosingMasks, newRectangle())
+			layer.EnclosingMasks = append(layer.EnclosingMasks, util.NewRectangle(reader))
 			layer.DefaultColor = reader.ReadByte()
 			layer.MaskFlags = reader.ReadByte()
 			if size == 20 {
@@ -91,7 +93,7 @@ func readLayers(doc *Document) {
 			} else {
 				layer.MaskRealFlags = reader.ReadByte()
 				layer.MaskBackground = reader.ReadByte()
-				layer.EnclosingMasks = append(layer.EnclosingMasks, newRectangle())
+				layer.EnclosingMasks = append(layer.EnclosingMasks, util.NewRectangle(reader))
 			}
 		}
 
@@ -129,7 +131,7 @@ func readLayers(doc *Document) {
 			key = reader.ReadString(4)
 
 			var dataLength int64
-			if doc.IsLarge && stringValueIs(key, "LMsk", "Lr16", "Lr32", "Layr", "Mt16", "Mt32", "Mtrn", "Alph", "FMsk", "lnk2", "FEid", "FXid", "PxSD") {
+			if doc.IsLarge && util.StringValueIs(key, "LMsk", "Lr16", "Lr32", "Layr", "Mt16", "Mt32", "Mtrn", "Alph", "FMsk", "lnk2", "FEid", "FXid", "PxSD") {
 				dataLength = reader.ReadInt64()
 			} else {
 				dataLength = int64(reader.ReadInt32())
@@ -166,7 +168,7 @@ func readLayers(doc *Document) {
 					scanLines[i] = reader.ReadInt16()
 				}
 				for i := range scanLines {
-					line := unpackRLEBits(reader.ReadSignedBytes(scanLines[i]), width)
+					line := util.UnpackRLEBits(reader.ReadSignedBytes(scanLines[i]), width)
 					result = append(result, line...)
 				}
 				data[i] = result
@@ -201,7 +203,7 @@ func readLayers(doc *Document) {
 }
 
 type Layer struct {
-	Rectangle *Rectangle
+	Rectangle *util.Rectangle
 	Channels  []*LayerChannel
 	BlendMode string
 	Opacity   byte
@@ -209,7 +211,7 @@ type Layer struct {
 	Flags     byte
 
 	// [TODO?] Adjustment layer data
-	EnclosingMasks []*Rectangle
+	EnclosingMasks []*util.Rectangle
 	DefaultColor   byte
 	MaskFlags      byte
 	Padding        int16

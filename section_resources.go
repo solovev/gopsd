@@ -1,10 +1,9 @@
 package gopsd
 
 import (
-	"bytes"
 	"fmt"
-	"image"
-	"image/jpeg"
+
+	"github.com/solovev/gopsd/resources"
 )
 
 func readResources(doc *Document) {
@@ -29,9 +28,9 @@ func readResources(doc *Document) {
 		dataPos := reader.Position
 		switch id {
 		case 1033, 1036:
-			doc.Resources[id] = readResourceThumbnail()
+			doc.Resources[id] = resources.ReadResourceThumbnail(reader)
 		case 1083:
-			doc.Resources[id] = readResourcePrintStyle()
+			doc.Resources[id] = resources.ReadResourcePrintStyle(reader)
 		default:
 			doc.Resources[id] = nil
 		}
@@ -42,55 +41,4 @@ func readResources(doc *Document) {
 
 		startPos += reader.Position - pos
 	}
-}
-
-type IRThumbnail struct {
-	Width  int32
-	Height int32
-	Image  image.Image
-}
-
-// http://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_74450
-func readResourceThumbnail() *IRThumbnail {
-	thumb := new(IRThumbnail)
-
-	format := reader.ReadInt32()
-	thumb.Width = reader.ReadInt32()
-	thumb.Height = reader.ReadInt32()
-
-	reader.ReadInt32() // Widthbytes
-	reader.ReadInt32() // Total size
-	comprSize := reader.ReadInt32()
-
-	reader.ReadInt16() // Bits per pixel
-	reader.ReadInt16() // Number of planes
-
-	switch format {
-	case 0:
-	case 1:
-		img, err := jpeg.Decode(bytes.NewReader(reader.ReadBytes(comprSize)))
-		if err != nil {
-			panic(err)
-		}
-		thumb.Image = img
-	default:
-	}
-
-	return thumb
-}
-
-type IRPrintStyle struct {
-	DescriptorVersion int32
-	Descriptor        *Descriptor
-}
-
-func readResourcePrintStyle() *IRPrintStyle {
-	style := new(IRPrintStyle)
-
-	style.DescriptorVersion = reader.ReadInt32()
-	if style.DescriptorVersion == 16 {
-		style.Descriptor = newDescriptor()
-	}
-
-	return style
 }
