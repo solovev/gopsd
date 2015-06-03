@@ -87,7 +87,7 @@ func newDescriptorList() map[string]*DescriptorEntity {
 		entity.Key = reader.ReadDynamicString()
 		entity.Type = reader.ReadString(4)
 		switch entity.Type {
-		case "obj":
+		case "obj ":
 			entity.Value = newDescriptorReference()
 		case "Objc", "GlbO":
 			entity.Value = newDescriptor()
@@ -175,35 +175,7 @@ func (d Descriptor) String(indent int) string {
 
 	sm.AddIndent(indent).Add("Descriptor [", fmt.Sprint(len(d.Items)), "]: ", d.Class).NewLine()
 	sm.AddIndent(indent).Add("{").NewLine()
-	for _, item := range d.Items {
-		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
-		switch value := item.Value.(type) {
-		case map[string]*DescriptorEntity: // Reference, List
-			sm.Add(stringList(value, indent+2))
-		case *Descriptor:
-			sm.NewLine()
-			sm.Add(value.String(indent + 2))
-		case float64, int32, bool:
-			sm.Add(fmt.Sprint(value))
-		case *DescriptorUnitFloat:
-			sm.Add("[Type: ", value.Type, ", Value: ", fmt.Sprint(value.Value), "]")
-		case string:
-			sm.Add(value)
-		case *DescriptorEnum:
-			sm.Add("[Type: ", value.Type, ", Enum: ", value.Enum, "]")
-		case *DescriptorClass:
-			sm.Add("[Name: ", value.Name, ", Class: ", value.Class, "]")
-		case *DescriptorProperty:
-			sm.Add("[Key: ", value.Key, " Name: ", value.Name, ", Class: ", value.Class, "]")
-		case *DescriptorOffset:
-			sm.Add("[Name: ", value.Name, ", Class: ", value.Class, " Value: ", fmt.Sprint(value.Value), "]")
-		case *DescriptorReferenceEnum:
-			sm.Add("[Type: ", value.Type, ", Enum: ", value.Enum, ", Class: ", value.Class, " Name: ", value.Name, "]")
-		default:
-			sm.Add("?")
-		}
-		sm.NewLine()
-	}
+	sm.Add(stringList(d.Items, indent))
 	sm.AddIndent(indent).Add("}")
 
 	return sm.String()
@@ -212,13 +184,18 @@ func (d Descriptor) String(indent int) string {
 func stringList(items map[string]*DescriptorEntity, indent int) string {
 	sm := newStringMixer()
 
-	sm.AddIndent(indent).Add("List [", fmt.Sprint(len(items)), "]").NewLine()
-	sm.AddIndent(indent).Add("{").NewLine()
 	for _, item := range items {
 		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
+			if item.Type == "obj " {
+				sm.AddIndent(indent+2).Add("Reference [", fmt.Sprint(len(items)), "]").NewLine()
+			} else {
+				sm.AddIndent(indent+2).Add("List [", fmt.Sprint(len(items)), "]").NewLine()
+			}
+			sm.AddIndent(indent + 2).Add("{").NewLine()
 			sm.Add(stringList(value, indent+2))
+			sm.AddIndent(indent + 2).Add("}")
 		case *Descriptor:
 			sm.NewLine()
 			sm.Add(value.String(indent + 2))
@@ -243,7 +220,6 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 		}
 		sm.NewLine()
 	}
-	sm.AddIndent(indent).Add("}")
 
 	return sm.String()
 }
