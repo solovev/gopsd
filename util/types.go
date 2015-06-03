@@ -247,3 +247,27 @@ func (r Rectangle) Height() int32 {
 func NewRectangle(reader *Reader) *Rectangle {
 	return &Rectangle{reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()}
 }
+
+type Color struct {
+	red, green, blue, alpha int16
+}
+
+func (c Color) Red() int16 {
+	return c.red
+}
+
+func (c Color) Green() int16 {
+	return c.green
+}
+
+func (c Color) Blue() int16 {
+	return c.blue
+}
+
+func (c Color) Alpha() int16 {
+	return c.alpha
+}
+
+func NewRGBAColor(reader *Reader) *Color {
+	return &Color{reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16()}
+}

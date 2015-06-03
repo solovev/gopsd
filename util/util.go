@@ -7,6 +7,20 @@ import (
 	"strings"
 )
 
+var (
+	BlendModeKeys = map[string]string{
+		"pass": "Pass through", "norm": "Normal", "diss": "Dissolve",
+		"dark": "Darken", "mul": "Multiply", "idiv": "Color burn",
+		"lbrn": "Linear burn", "dkCl": "Darker color", "lite": "Lighten",
+		"scrn": "Screen", "div": "Color dodge", "lddg": "Linear dodge",
+		"lgCl": "Lighter color", "over": "Overlay", "sLit": "Soft light",
+		"hLit": "Hard light", "vLit": "Vivid light", "lLit": "Linear light",
+		"pLit": "Pin light", "hMix": "Hard mix", "diff": "Difference",
+		"smud": "Exclusion", "fsub": "Subtract", "fdiv": "Divide",
+		"hue": "Hue", "sat": "Saturation", "colr": "Color", "lum": "Luminosity",
+	}
+)
+
 func IsDocumentValid(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {

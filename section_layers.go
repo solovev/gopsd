@@ -6,21 +6,8 @@ import (
 	"image/color"
 	"math"
 
+	"github.com/solovev/gopsd/resources"
 	"github.com/solovev/gopsd/util"
-)
-
-var (
-	BlendModeKeys = map[string]string{
-		"pass": "Pass through", "norm": "Normal", "diss": "Dissolve",
-		"dark": "Darken", "mul": "Multiply", "idiv": "Color burn",
-		"lbrn": "Linear burn", "dkCl": "Darker color", "lite": "Lighten",
-		"scrn": "Screen", "div": "Color dodge", "lddg": "Linear dodge",
-		"lgCl": "Lighter color", "over": "Overlay", "sLit": "Soft light",
-		"hLit": "Hard light", "vLit": "Vivid light", "lLit": "Linear light",
-		"pLit": "Pin light", "hMix": "Hard mix", "diff": "Difference",
-		"smud": "Exclusion", "fsub": "Subtract", "fdiv": "Divide",
-		"hue": "Hue", "sat": "Saturation", "colr": "Color", "lum": "Luminosity",
-	}
 )
 
 func readLayers(doc *Document) {
@@ -70,7 +57,7 @@ func readLayers(doc *Document) {
 		}
 
 		key := reader.ReadString(4)
-		if mode, ok := BlendModeKeys[key]; ok {
+		if mode, ok := util.BlendModeKeys[key]; ok {
 			layer.BlendMode = mode
 		}
 
@@ -122,11 +109,11 @@ func readLayers(doc *Document) {
 		}
 
 		// Additional information at the end of the layer
-		layer.Data = make(map[string]interface{})
+		index := 0
 		for reader.Position < int(extraLength)+extraPos {
 			sign = reader.ReadString(4)
 			if sign != "8BIM" && sign != "8B64" {
-				panic(fmt.Sprintf("[Layer: %s] Wrong signature of additional info [#%d]", layer.Name, len(layer.Data)))
+				panic(fmt.Sprintf("[Layer: %s] Wrong signature of additional info [#%d]", layer.Name, index))
 			}
 			key = reader.ReadString(4)
 
@@ -139,13 +126,42 @@ func readLayers(doc *Document) {
 			dataLength = dataLength + 1 & ^0x01
 			dataPos := reader.Position
 
+			fmt.Print("[" + key + ": " + fmt.Sprint(dataLength) + "]")
 			switch key {
+			case "luni":
+				layer.Name = reader.ReadUnicodeString()
+			case "lnsr": // layr / bgnd
+				layer.IsBackground = reader.ReadString(4) == "bgnd"
+			case "lyid":
+				layer.Id = reader.ReadInt32()
+			case "clbl":
+				layer.BlendClippedElements = reader.ReadByte() == 1
+				reader.Skip(3)
+			case "infx":
+				layer.BlendInteriorElements = reader.ReadByte() == 1
+				reader.Skip(3)
+			case "knko":
+				layer.Knockout = reader.ReadByte() == 1
+				reader.Skip(3)
+			case "lspf":
+				layer.ProtectionFlags = reader.ReadInt32()
+			case "lclr":
+				layer.SheetColor = util.NewRGBAColor(reader)
+			case "fxrp":
+				point := make([]float64, 2)
+				point[0] = reader.ReadFloat64()
+				point[1] = reader.ReadFloat64()
+				layer.ReferencePoint = point
+			case "lsct":
+				layer.Section = resources.ReadLayerSection(reader, dataLength, layer.Name)
+				layer.IsFolder = layer.Section.Type > 0
 			default:
-				layer.Data[key] = nil
 				reader.Skip(dataLength)
 			}
 			reader.Skip(dataPos + int(dataLength) - reader.Position)
+			index++
 		}
+		fmt.Println()
 		// [CHECK] Not needed
 		reader.Skip(int(extraLength) - (reader.Position - extraPos))
 		doc.Layers = append(doc.Layers, layer)
@@ -203,6 +219,7 @@ func readLayers(doc *Document) {
 }
 
 type Layer struct {
+	Id        int32
 	Rectangle *util.Rectangle
 	Channels  []*LayerChannel
 	BlendMode string
@@ -221,8 +238,17 @@ type Layer struct {
 	// [CHECK] Blending ranges data, empty name
 	BlendingRanges []*LayerBlendingRanges
 	Name           string
-	Data           map[string]interface{}
 	Image          image.Image
+
+	IsBackground          bool
+	BlendClippedElements  bool
+	BlendInteriorElements bool
+	Knockout              bool
+	ProtectionFlags       int32
+	SheetColor            *util.Color
+	ReferencePoint        []float64
+	Section               *resources.LayerSection
+	IsFolder              bool
 }
 
 type LayerChannel struct {
