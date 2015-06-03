@@ -127,9 +127,8 @@ func (s *StringMixer) AddIndent(value int) *StringMixer {
 	return s
 }
 
-func (s *StringMixer) NewLine() *StringMixer {
+func (s *StringMixer) NewLine() {
 	s.buffer.WriteString("\n")
-	return s
 }
 
 func (s *StringMixer) String() string {

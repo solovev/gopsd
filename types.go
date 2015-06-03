@@ -173,14 +173,16 @@ func newDescriptorOffset() *DescriptorOffset {
 func (d Descriptor) String(indent int) string {
 	sm := newStringMixer()
 
-	sm.AddIndent(indent).Add("Descriptor: ", d.Class).NewLine().AddIndent(indent).Add("{").NewLine()
+	sm.AddIndent(indent).Add("Descriptor [", fmt.Sprint(len(d.Items)), "]: ", d.Class).NewLine()
+	sm.AddIndent(indent).Add("{").NewLine()
 	for _, item := range d.Items {
 		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
 			sm.Add(stringList(value, indent+2))
 		case *Descriptor:
-			sm.NewLine().Add(value.String(indent + 2))
+			sm.NewLine()
+			sm.Add(value.String(indent + 2))
 		case float64, int32, bool:
 			sm.Add(fmt.Sprint(value))
 		case *DescriptorUnitFloat:
@@ -210,14 +212,16 @@ func (d Descriptor) String(indent int) string {
 func stringList(items map[string]*DescriptorEntity, indent int) string {
 	sm := newStringMixer()
 
-	sm.AddIndent(indent).Add("List").NewLine().AddIndent(indent).Add("{").NewLine()
+	sm.AddIndent(indent).Add("List [", fmt.Sprint(len(items)), "]").NewLine()
+	sm.AddIndent(indent).Add("{").NewLine()
 	for _, item := range items {
 		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
 			sm.Add(stringList(value, indent+2))
 		case *Descriptor:
-			sm.NewLine().Add(value.String(indent + 2))
+			sm.NewLine()
+			sm.Add(value.String(indent + 2))
 		case float64, int32, bool:
 			sm.Add(fmt.Sprint(value))
 		case *DescriptorUnitFloat:
