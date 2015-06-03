@@ -171,17 +171,16 @@ func newDescriptorOffset() *DescriptorOffset {
 }
 
 func (d Descriptor) String(indent int) string {
-	sm := newStringMixer(indent)
+	sm := newStringMixer()
 
-	sm.Add("Descriptor: ", d.Class).NewLine().Add("{")
-	sm.Indent++
+	sm.AddIndent(indent).Add("Descriptor: ", d.Class).NewLine().AddIndent(indent).Add("{").NewLine()
 	for _, item := range d.Items {
-		sm.Add("[", item.Type, "] ", item.Key, ": ")
+		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
-			sm.Add(stringList(value, sm.Indent))
+			sm.Add(stringList(value, indent+2))
 		case *Descriptor:
-			sm.Add(value.String(sm.Indent))
+			sm.NewLine().Add(value.String(indent + 2))
 		case float64, int32, bool:
 			sm.Add(fmt.Sprint(value))
 		case *DescriptorUnitFloat:
@@ -203,24 +202,22 @@ func (d Descriptor) String(indent int) string {
 		}
 		sm.NewLine()
 	}
-	sm.Indent--
-	sm.NewLine().Add("}")
+	sm.AddIndent(indent).Add("}")
 
 	return sm.String()
 }
 
 func stringList(items map[string]*DescriptorEntity, indent int) string {
-	sm := newStringMixer(indent)
+	sm := newStringMixer()
 
-	sm.Add("List").NewLine().Add("{")
-	sm.Indent++
+	sm.AddIndent(indent).Add("List").NewLine().AddIndent(indent).Add("{").NewLine()
 	for _, item := range items {
-		sm.Add("[", item.Type, "] ", item.Key, ": ")
+		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
-			sm.Add(stringList(value, sm.Indent))
+			sm.Add(stringList(value, indent+2))
 		case *Descriptor:
-			sm.Add(value.String(sm.Indent))
+			sm.NewLine().Add(value.String(indent + 2))
 		case float64, int32, bool:
 			sm.Add(fmt.Sprint(value))
 		case *DescriptorUnitFloat:
@@ -242,8 +239,7 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 		}
 		sm.NewLine()
 	}
-	sm.Indent--
-	sm.NewLine().Add("}")
+	sm.AddIndent(indent).Add("}")
 
 	return sm.String()
 }

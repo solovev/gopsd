@@ -105,22 +105,24 @@ func unpackRLEBits(data []int8, length int) []int8 {
 }
 
 type StringMixer struct {
-	Indent int
 	buffer bytes.Buffer
 }
 
-func newStringMixer(indent int) *StringMixer {
+func newStringMixer() *StringMixer {
 	sm := new(StringMixer)
-	sm.Indent = indent
 	return sm
 }
 
 func (s *StringMixer) Add(values ...string) *StringMixer {
 	for _, value := range values {
-		for i := 0; i < s.Indent; i++ {
-			s.buffer.WriteString("    ")
-		}
 		s.buffer.WriteString(value)
+	}
+	return s
+}
+
+func (s *StringMixer) AddIndent(value int) *StringMixer {
+	for i := 0; i < value; i++ {
+		s.buffer.WriteString("    ")
 	}
 	return s
 }
