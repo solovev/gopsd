@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"math"
 
-	"github.com/solovev/gopsd/resources"
 	"github.com/solovev/gopsd/util"
 )
 
@@ -42,7 +41,7 @@ func readLayers(doc *Document) {
 		for j := 0; j < int(chanCount); j++ {
 			channel := new(LayerChannel)
 
-			channel.Id = reader.ReadInt16()
+			channel.ID = reader.ReadInt16()
 			if doc.IsLarge {
 				channel.Length = reader.ReadInt64()
 			} else {
@@ -133,7 +132,7 @@ func readLayers(doc *Document) {
 			case "lnsr": // layr / bgnd
 				layer.IsBackground = reader.ReadString(4) == "bgnd"
 			case "lyid":
-				layer.Id = reader.ReadInt32()
+				layer.ID = reader.ReadInt32()
 			case "clbl":
 				layer.BlendClippedElements = reader.ReadByte() == 1
 				reader.Skip(3)
@@ -153,8 +152,13 @@ func readLayers(doc *Document) {
 				point[1] = reader.ReadFloat64()
 				layer.ReferencePoint = point
 			case "lsct":
-				layer.Section = resources.ReadLayerSection(reader, dataLength, layer.Name)
+				layer.Section = ReadLayerSection(reader, dataLength, layer.Name)
 				layer.IsFolder = layer.Section.Type > 0
+			case "lfx2":
+				reader.ReadInt32()
+				reader.ReadInt32()
+				d := util.NewDescriptor(reader)
+				fmt.Println(d.Items)
 			default:
 				reader.Skip(dataLength)
 			}
@@ -178,7 +182,7 @@ func readLayers(doc *Document) {
 			case 0:
 				data[i] = reader.ReadSignedBytes(width * height)
 			case 1:
-				result := make([]int8, 0)
+				var result []int8
 				scanLines := make([]int16, height)
 				for i := range scanLines {
 					scanLines[i] = reader.ReadInt16()
@@ -189,7 +193,7 @@ func readLayers(doc *Document) {
 				}
 				data[i] = result
 			default:
-				panic(fmt.Sprintf("[Layer: %s] Unknown compression method of channel [id: %d]", layer.Name, channel.Id))
+				panic(fmt.Sprintf("[Layer: %s] Unknown compression method of channel [id: %d]", layer.Name, channel.ID))
 			}
 		}
 
@@ -219,7 +223,7 @@ func readLayers(doc *Document) {
 }
 
 type Layer struct {
-	Id        int32
+	ID        int32
 	Rectangle *util.Rectangle
 	Channels  []*LayerChannel
 	BlendMode string
@@ -247,12 +251,12 @@ type Layer struct {
 	ProtectionFlags       int32
 	SheetColor            *util.Color
 	ReferencePoint        []float64
-	Section               *resources.LayerSection
+	Section               *LayerSection
 	IsFolder              bool
 }
 
 type LayerChannel struct {
-	Id int16
+	ID int16
 	// [CHECK]
 	Length int64
 }

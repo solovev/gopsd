@@ -2,8 +2,6 @@ package gopsd
 
 import (
 	"fmt"
-
-	"github.com/solovev/gopsd/resources"
 )
 
 func readResources(doc *Document) {
@@ -28,9 +26,9 @@ func readResources(doc *Document) {
 		dataPos := reader.Position
 		switch id {
 		case 1033, 1036:
-			doc.Resources[id] = resources.ReadResourceThumbnail(reader)
+			doc.Resources[id] = ReadResourceThumbnail(reader)
 		case 1083:
-			doc.Resources[id] = resources.ReadResourcePrintStyle(reader)
+			doc.Resources[id] = ReadResourcePrintStyle(reader)
 		default:
 			doc.Resources[id] = nil
 		}

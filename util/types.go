@@ -53,7 +53,7 @@ func NewDescriptor(reader *Reader) *Descriptor {
 
 	value.Name = reader.ReadUnicodeString()
 	value.Class = reader.ReadDynamicString()
-	value.Items = newDescriptorList(reader)
+	value.Items = newDescriptorList(value, reader)
 
 	return value
 }
@@ -79,12 +79,14 @@ func newDescriptorEnum(reader *Reader) *DescriptorEnum {
 	return enum
 }
 
-func newDescriptorList(reader *Reader) map[string]*DescriptorEntity {
+func newDescriptorList(descriptor *Descriptor, reader *Reader) map[string]*DescriptorEntity {
 	value := make(map[string]*DescriptorEntity)
 	count := reader.ReadInt32()
 	for i := 0; i < int(count); i++ {
 		entity := new(DescriptorEntity)
-		entity.Key = reader.ReadDynamicString()
+		if descriptor != nil {
+			entity.Key = reader.ReadDynamicString()
+		}
 		entity.Type = reader.ReadString(4)
 		switch entity.Type {
 		case "obj ":
@@ -92,7 +94,7 @@ func newDescriptorList(reader *Reader) map[string]*DescriptorEntity {
 		case "Objc", "GlbO":
 			entity.Value = NewDescriptor(reader)
 		case "VlLs":
-			entity.Value = newDescriptorList(reader)
+			entity.Value = newDescriptorList(nil, reader)
 		case "doub":
 			entity.Value = reader.ReadFloat64()
 		case "UntF":

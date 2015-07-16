@@ -19,6 +19,10 @@ var (
 		"smud": "Exclusion", "fsub": "Subtract", "fdiv": "Divide",
 		"hue": "Hue", "sat": "Saturation", "colr": "Color", "lum": "Luminosity",
 	}
+	ColorModes = map[int16]string{
+		0: "Bitmap", 1: "Grayscale", 2: "Indexed", 3: "RGB",
+		4: "CMYK", 7: "Multichannel", 8: "Duotune", 9: "Lab",
+	}
 )
 
 func IsDocumentValid(path string) (bool, error) {

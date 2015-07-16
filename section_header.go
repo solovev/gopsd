@@ -2,13 +2,6 @@ package gopsd
 
 import "github.com/solovev/gopsd/util"
 
-var (
-	ColorModes = map[int16]string{
-		0: "Bitmap", 1: "Grayscale", 2: "Indexed", 3: "RGB",
-		4: "CMYK", 7: "Multichannel", 8: "Duotune", 9: "Lab",
-	}
-)
-
 func readHeader(doc *Document) {
 	if reader.ReadString(4) != "8BPS" {
 		panic("Wrong document signature.")
@@ -46,7 +39,7 @@ func readHeader(doc *Document) {
 	}
 
 	cm := reader.ReadInt16()
-	if mode, ok := ColorModes[cm]; ok {
+	if mode, ok := util.ColorModes[cm]; ok {
 		doc.ColorMode = mode
 	} else {
 		panic("Unknown color mode.")

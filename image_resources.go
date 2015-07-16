@@ -1,4 +1,4 @@
-package resources
+package gopsd
 
 import (
 	"bytes"
