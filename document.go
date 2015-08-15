@@ -28,7 +28,32 @@ var (
 	reader *util.Reader
 )
 
-func Parse(path string) (doc *Document, err error) {
+func ParseFromBuffer(buffer []byte) (doc *Document, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch value := r.(type) {
+			case string:
+				err = errors.New(value)
+			case error:
+				err = value
+			}
+			doc = nil
+		}
+	}()
+
+	reader = util.NewReader(buffer)
+
+	doc = new(Document)
+	readHeader(doc)
+	readColorMode(doc)
+	readResources(doc)
+	readLayers(doc)
+	readImageData(doc)
+
+	return doc, nil
+}
+
+func ParseFromPath(path string) (doc *Document, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch value := r.(type) {
