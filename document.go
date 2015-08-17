@@ -28,6 +28,10 @@ var (
 	reader *util.Reader
 )
 
+func (Document) ToJson() ([]byte, error) {
+	return nil, nil
+}
+
 func ParseFromBuffer(buffer []byte) (doc *Document, err error) {
 	defer func() {
 		if r := recover(); r != nil {
