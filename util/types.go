@@ -227,27 +227,30 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 }
 
 type Rectangle struct {
-	top, left, bottom, right int32
-}
+	top    int32 `json:"-"`
+	left   int32 `json:"-"`
+	bottom int32 `json:"-"`
+	right  int32 `json:"-"`
 
-func (r Rectangle) X() int32 {
-	return r.left
-}
-
-func (r Rectangle) Y() int32 {
-	return r.top
-}
-
-func (r Rectangle) Width() int32 {
-	return r.right - r.left
-}
-
-func (r Rectangle) Height() int32 {
-	return r.bottom - r.top
+	X, Y, Width, Height int32
 }
 
 func NewRectangle(reader *Reader) *Rectangle {
-	return &Rectangle{reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()}
+	r := new(Rectangle)
+
+	r.top = reader.ReadInt32()
+	r.Y = r.top
+
+	r.left = reader.ReadInt32()
+	r.X = r.left
+
+	r.bottom = reader.ReadInt32()
+	r.right = reader.ReadInt32()
+
+	r.Width = r.right - r.left
+	r.Height = r.bottom - r.top
+
+	return r
 }
 
 type Color struct {

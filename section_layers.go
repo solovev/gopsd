@@ -172,8 +172,8 @@ func readLayers(doc *Document) {
 	}
 
 	for _, layer := range doc.Layers {
-		width := int(layer.Rectangle.Width())
-		height := int(layer.Rectangle.Height())
+		width := int(layer.Rectangle.Width)
+		height := int(layer.Rectangle.Height)
 
 		data := make(map[int][]int8)
 		for i, channel := range layer.Channels {
@@ -224,35 +224,36 @@ func readLayers(doc *Document) {
 
 type Layer struct {
 	ID        int32
+	Name      string
 	Rectangle *util.Rectangle
-	Channels  []*LayerChannel
-	BlendMode string
-	Opacity   byte
-	Clipping  byte
-	Flags     byte
+	Channels  []*LayerChannel `json:"-"`
+	BlendMode string          `json:"-"`
+	Opacity   byte            `json:"-"`
+	Clipping  byte            `json:"-"`
+	Flags     byte            `json:"-"`
 
 	// [TODO?] Adjustment layer data
-	EnclosingMasks []*util.Rectangle
-	DefaultColor   byte
-	MaskFlags      byte
-	Padding        int16
-	MaskRealFlags  byte
-	MaskBackground byte
+	EnclosingMasks []*util.Rectangle `json:"-"`
+	DefaultColor   byte              `json:"-"`
+	MaskFlags      byte              `json:"-"`
+	Padding        int16             `json:"-"`
+	MaskRealFlags  byte              `json:"-"`
+	MaskBackground byte              `json:"-"`
 
 	// [CHECK] Blending ranges data, empty name
-	BlendingRanges []*LayerBlendingRanges
-	Name           string
-	Image          image.Image
+	BlendingRanges []*LayerBlendingRanges `json:"-"`
 
-	IsBackground          bool
-	BlendClippedElements  bool
-	BlendInteriorElements bool
-	Knockout              bool
-	ProtectionFlags       int32
-	SheetColor            *util.Color
-	ReferencePoint        []float64
-	Section               *LayerSection
-	IsFolder              bool
+	Image image.Image `json:"-"`
+
+	IsBackground          bool          `json:"-"`
+	BlendClippedElements  bool          `json:"-"`
+	BlendInteriorElements bool          `json:"-"`
+	Knockout              bool          `json:"-"`
+	ProtectionFlags       int32         `json:"-"`
+	SheetColor            *util.Color   `json:"-"`
+	ReferencePoint        []float64     `json:"-"`
+	Section               *LayerSection `json:"-"`
+	IsFolder              bool          `json:"-"`
 }
 
 type LayerChannel struct {

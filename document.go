@@ -1,6 +1,7 @@
 package gopsd
 
 import (
+	"encoding/json"
 	"errors"
 	"image"
 	"io/ioutil"
@@ -11,16 +12,16 @@ import (
 // TODO all INT -> INT64 (**PSB**)
 // TODO make([]interface{}, 0) -> var name []interface{}
 type Document struct {
-	IsLarge bool
+	IsLarge bool `json:"-"`
 
-	Channels  int16
+	Channels  int16 `json:"-"`
 	Height    int32
 	Width     int32
-	Depth     int16
-	ColorMode string
-	Image     image.Image
+	Depth     int16       `json:"-"`
+	ColorMode string      `json:"-"`
+	Image     image.Image `json:"-"`
 
-	Resources map[int16]interface{}
+	Resources map[int16]interface{} `json:"-"`
 	Layers    []*Layer
 }
 
@@ -28,8 +29,8 @@ var (
 	reader *util.Reader
 )
 
-func (Document) ToJson() ([]byte, error) {
-	return nil, nil
+func (d *Document) ToJSON() ([]byte, error) {
+	return json.Marshal(d)
 }
 
 func ParseFromBuffer(buffer []byte) (doc *Document, err error) {
