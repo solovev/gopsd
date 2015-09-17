@@ -253,6 +253,10 @@ func NewRectangle(reader *Reader) *Rectangle {
 	return r
 }
 
+func (r Rectangle) ToString() string {
+	return fmt.Sprintf("[X: %d, Y: %d, Width: %d, Height: %d]", r.X, r.Y, r.Width, r.Height)
+}
+
 type Color struct {
 	red, green, blue, alpha int16
 }

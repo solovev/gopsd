@@ -125,7 +125,6 @@ func readLayers(doc *Document) {
 			dataLength = dataLength + 1 & ^0x01
 			dataPos := reader.Position
 
-			fmt.Print("[" + key + ": " + fmt.Sprint(dataLength) + "]")
 			switch key {
 			case "luni":
 				layer.Name = reader.ReadUnicodeString()
@@ -157,15 +156,13 @@ func readLayers(doc *Document) {
 			case "lfx2":
 				reader.ReadInt32()
 				reader.ReadInt32()
-				d := util.NewDescriptor(reader)
-				fmt.Println(d.Items)
+				util.NewDescriptor(reader)
 			default:
 				reader.Skip(dataLength)
 			}
 			reader.Skip(dataPos + int(dataLength) - reader.Position)
 			index++
 		}
-		fmt.Println()
 		// [CHECK] Not needed
 		reader.Skip(int(extraLength) - (reader.Position - extraPos))
 		doc.Layers = append(doc.Layers, layer)
@@ -220,6 +217,10 @@ func readLayers(doc *Document) {
 		layer.Image = image
 	}
 	reader.Skip(int(length) - (reader.Position - pos))
+}
+
+func (l Layer) ToString() string {
+	return fmt.Sprintf("%s: %s", l.Name, l.Rectangle.ToString())
 }
 
 type Layer struct {
