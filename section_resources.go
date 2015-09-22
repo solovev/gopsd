@@ -24,11 +24,14 @@ func readResources(doc *Document) {
 
 		size := reader.ReadInt32()
 		dataPos := reader.Position
+
 		switch id {
 		case 1033, 1036:
 			doc.Resources[id] = ReadResourceThumbnail(reader)
 		case 1083:
 			doc.Resources[id] = ReadResourcePrintStyle(reader)
+		case 1064:
+			doc.Resources[id] = ReadResourceAspectRatio(reader)
 		default:
 			doc.Resources[id] = nil
 		}

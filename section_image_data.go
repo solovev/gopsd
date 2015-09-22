@@ -1,6 +1,7 @@
 package gopsd
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 
@@ -9,10 +10,13 @@ import (
 
 func readImageData(doc *Document) {
 	rle := reader.ReadInt16() == 1
+	fmt.Println(rle)
 
 	width := int(doc.Width)
 	height := int(doc.Height)
 	channels := int(doc.Channels)
+
+	fmt.Println(width, height, channels)
 
 	byteCounts := make([]int16, channels*height)
 	if rle {
@@ -29,6 +33,7 @@ func readImageData(doc *Document) {
 			for j := 0; j < height; j++ {
 				length := byteCounts[index]
 				index++
+
 				line := util.UnpackRLEBits(reader.ReadSignedBytes(length), width)
 				data = append(data, line...)
 			}

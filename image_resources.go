@@ -2,6 +2,7 @@ package gopsd
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/jpeg"
 
@@ -17,6 +18,11 @@ type IRThumbnail struct {
 type IRPrintStyle struct {
 	DescriptorVersion int32
 	Descriptor        *util.Descriptor
+}
+
+type IRAspectRatio struct {
+	Version int32
+	Ratio   float64
 }
 
 // http://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_74450
@@ -57,4 +63,15 @@ func ReadResourcePrintStyle(reader *util.Reader) *IRPrintStyle {
 	}
 
 	return style
+}
+
+func ReadResourceAspectRatio(reader *util.Reader) *IRAspectRatio {
+	ratio := new(IRAspectRatio)
+
+	ratio.Version = reader.ReadInt32()
+	//ratio.Ratio = reader.ReadFloat64()
+
+	fmt.Println(reader.ReadBytes(8))
+
+	return ratio
 }

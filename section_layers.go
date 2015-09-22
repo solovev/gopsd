@@ -157,6 +157,12 @@ func readLayers(doc *Document) {
 				reader.ReadInt32()
 				reader.ReadInt32()
 				util.NewDescriptor(reader)
+			case "TySh":
+				reader.Skip(56)
+				util.NewDescriptor(reader)
+				reader.Skip(6)
+				util.NewDescriptor(reader)
+				reader.Skip(32)
 			default:
 				reader.Skip(dataLength)
 			}
