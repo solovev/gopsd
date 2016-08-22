@@ -1,6 +1,10 @@
-package util
+package types
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/solovev/gopsd/util"
+)
 
 type Descriptor struct {
 	Name  string
@@ -48,7 +52,7 @@ type DescriptorOffset struct {
 	Value int32
 }
 
-func NewDescriptor(reader *Reader) *Descriptor {
+func NewDescriptor(reader *util.Reader) *Descriptor {
 	value := new(Descriptor)
 
 	value.Name = reader.ReadUnicodeString()
@@ -58,28 +62,28 @@ func NewDescriptor(reader *Reader) *Descriptor {
 	return value
 }
 
-func newDescriptorUnitFloat(reader *Reader) *DescriptorUnitFloat {
+func newDescriptorUnitFloat(reader *util.Reader) *DescriptorUnitFloat {
 	unit := new(DescriptorUnitFloat)
 	unit.Type = reader.ReadString(4)
 	unit.Value = reader.ReadFloat64()
 	return unit
 }
 
-func newDescriptorClass(reader *Reader) *DescriptorClass {
+func newDescriptorClass(reader *util.Reader) *DescriptorClass {
 	class := new(DescriptorClass)
 	class.Name = reader.ReadUnicodeString()
 	class.Class = reader.ReadDynamicString()
 	return class
 }
 
-func newDescriptorEnum(reader *Reader) *DescriptorEnum {
+func newDescriptorEnum(reader *util.Reader) *DescriptorEnum {
 	enum := new(DescriptorEnum)
 	enum.Type = reader.ReadDynamicString()
 	enum.Enum = reader.ReadDynamicString()
 	return enum
 }
 
-func newDescriptorList(descriptor *Descriptor, reader *Reader) map[string]*DescriptorEntity {
+func newDescriptorList(descriptor *Descriptor, reader *util.Reader) map[string]*DescriptorEntity {
 	value := make(map[string]*DescriptorEntity)
 	count := reader.ReadInt32()
 	for i := 0; i < int(count); i++ {
@@ -113,7 +117,8 @@ func newDescriptorList(descriptor *Descriptor, reader *Reader) map[string]*Descr
 			reader.Skip(reader.ReadInt32())
 		case "tdta": // TODO
 			//reader.Skip(reader.ReadInt32())
-			fmt.Println(reader.ReadDynamicString())
+			//fmt.Println(reader.ReadDynamicString())
+			reader.ReadDynamicString()
 		default:
 			panic(fmt.Sprintf("Unknown OSType key [%s] in entity [%s]", entity.Type, entity.Key))
 		}
@@ -122,7 +127,7 @@ func newDescriptorList(descriptor *Descriptor, reader *Reader) map[string]*Descr
 	return value
 }
 
-func newDescriptorReference(reader *Reader) map[string]*DescriptorEntity {
+func newDescriptorReference(reader *util.Reader) map[string]*DescriptorEntity {
 	value := make(map[string]*DescriptorEntity)
 	count := reader.ReadInt32()
 	for i := 0; i < int(count); i++ {
@@ -148,7 +153,7 @@ func newDescriptorReference(reader *Reader) map[string]*DescriptorEntity {
 	return value
 }
 
-func newDescriptorProperty(reader *Reader) *DescriptorProperty {
+func newDescriptorProperty(reader *util.Reader) *DescriptorProperty {
 	property := new(DescriptorProperty)
 	property.Name = reader.ReadUnicodeString()
 	property.Class = reader.ReadDynamicString()
@@ -156,7 +161,7 @@ func newDescriptorProperty(reader *Reader) *DescriptorProperty {
 	return property
 }
 
-func newDescriptorReferenceEnum(reader *Reader) *DescriptorReferenceEnum {
+func newDescriptorReferenceEnum(reader *util.Reader) *DescriptorReferenceEnum {
 	enum := new(DescriptorReferenceEnum)
 	enum.Name = reader.ReadUnicodeString()
 	enum.Class = reader.ReadDynamicString()
@@ -165,7 +170,7 @@ func newDescriptorReferenceEnum(reader *Reader) *DescriptorReferenceEnum {
 	return enum
 }
 
-func newDescriptorOffset(reader *Reader) *DescriptorOffset {
+func newDescriptorOffset(reader *util.Reader) *DescriptorOffset {
 	offset := new(DescriptorOffset)
 	offset.Name = reader.ReadUnicodeString()
 	offset.Class = reader.ReadDynamicString()
@@ -174,7 +179,7 @@ func newDescriptorOffset(reader *Reader) *DescriptorOffset {
 }
 
 func (d Descriptor) String(indent int) string {
-	sm := new(StringMixer)
+	sm := new(util.StringMixer)
 
 	sm.AddIndent(indent).Add("Descriptor [", fmt.Sprint(len(d.Items)), "]: ", d.Class).NewLine()
 	sm.AddIndent(indent).Add("{").NewLine()
@@ -185,7 +190,7 @@ func (d Descriptor) String(indent int) string {
 }
 
 func stringList(items map[string]*DescriptorEntity, indent int) string {
-	sm := new(StringMixer)
+	sm := new(util.StringMixer)
 
 	for _, item := range items {
 		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
@@ -225,59 +230,4 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 	}
 
 	return sm.String()
-}
-
-type Rectangle struct {
-	top    int32 `json:"-"`
-	left   int32 `json:"-"`
-	bottom int32 `json:"-"`
-	right  int32 `json:"-"`
-
-	X, Y, Width, Height int32
-}
-
-func NewRectangle(reader *Reader) *Rectangle {
-	r := new(Rectangle)
-
-	r.top = reader.ReadInt32()
-	r.Y = r.top
-
-	r.left = reader.ReadInt32()
-	r.X = r.left
-
-	r.bottom = reader.ReadInt32()
-	r.right = reader.ReadInt32()
-
-	r.Width = r.right - r.left
-	r.Height = r.bottom - r.top
-
-	return r
-}
-
-func (r Rectangle) ToString() string {
-	return fmt.Sprintf("[X: %d, Y: %d, Width: %d, Height: %d]", r.X, r.Y, r.Width, r.Height)
-}
-
-type Color struct {
-	red, green, blue, alpha int16
-}
-
-func (c Color) Red() int16 {
-	return c.red
-}
-
-func (c Color) Green() int16 {
-	return c.green
-}
-
-func (c Color) Blue() int16 {
-	return c.blue
-}
-
-func (c Color) Alpha() int16 {
-	return c.alpha
-}
-
-func NewRGBAColor(reader *Reader) *Color {
-	return &Color{reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16()}
 }

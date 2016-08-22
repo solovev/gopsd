@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"math"
 
+	"github.com/solovev/gopsd/types"
 	"github.com/solovev/gopsd/util"
 )
 
@@ -35,7 +36,7 @@ func readLayers(doc *Document) {
 	for i := 0; i < int(layerCount); i++ {
 		layer := new(Layer)
 
-		layer.Rectangle = util.NewRectangle(reader)
+		layer.Rectangle = types.NewRectangle(reader)
 
 		chanCount := reader.ReadInt16()
 		for j := 0; j < int(chanCount); j++ {
@@ -71,7 +72,7 @@ func readLayers(doc *Document) {
 		// Mask data
 		size := reader.ReadInt32()
 		if size != 0 {
-			layer.EnclosingMasks = append(layer.EnclosingMasks, util.NewRectangle(reader))
+			layer.EnclosingMasks = append(layer.EnclosingMasks, types.NewRectangle(reader))
 			layer.DefaultColor = reader.ReadByte()
 			layer.MaskFlags = reader.ReadByte()
 			if size == 20 {
@@ -79,7 +80,7 @@ func readLayers(doc *Document) {
 			} else {
 				layer.MaskRealFlags = reader.ReadByte()
 				layer.MaskBackground = reader.ReadByte()
-				layer.EnclosingMasks = append(layer.EnclosingMasks, util.NewRectangle(reader))
+				layer.EnclosingMasks = append(layer.EnclosingMasks, types.NewRectangle(reader))
 			}
 		}
 
@@ -115,6 +116,7 @@ func readLayers(doc *Document) {
 				panic(fmt.Sprintf("[Layer: %s] Wrong signature of additional info [#%d]", layer.Name, index))
 			}
 			key = reader.ReadString(4)
+			layer.DataKeys = append(layer.DataKeys, key)
 
 			var dataLength int64
 			if doc.IsLarge && util.StringValueIs(key, "LMsk", "Lr16", "Lr32", "Layr", "Mt16", "Mt32", "Mtrn", "Alph", "FMsk", "lnk2", "FEid", "FXid", "PxSD") {
@@ -144,25 +146,52 @@ func readLayers(doc *Document) {
 			case "lspf":
 				layer.ProtectionFlags = reader.ReadInt32()
 			case "lclr":
-				layer.SheetColor = util.NewRGBAColor(reader)
+				layer.SheetColor = types.NewRGBAColor(reader)
 			case "fxrp":
 				point := make([]float64, 2)
 				point[0] = reader.ReadFloat64()
 				point[1] = reader.ReadFloat64()
 				layer.ReferencePoint = point
 			case "lsct":
-				layer.Section = ReadLayerSection(reader, dataLength, layer.Name)
-				layer.IsFolder = layer.Section.Type > 0
+				sectionType := reader.ReadInt32()
+				if sectionType == 3 {
+					layer.IsSectionDivider = true
+				} else if sectionType > 0 {
+					layer.IsFolder = true
+				}
+				if dataLength >= 12 {
+					if reader.ReadString(4) != "8BIM" {
+						panic(fmt.Sprintf("Wrong section signature of layer %s", layer.Name))
+					}
+					key := reader.ReadString(4)
+					if mode, ok := util.BlendModeKeys[key]; ok {
+						layer.BlendMode = mode // Overriding (as group)
+					}
+				}
+				if dataLength >= 16 {
+					layer.IsSceneGroup = reader.ReadInt32() > 0
+				}
+			case "lsdk": // Inserted layer group (not present in spec)
+				sectionType := reader.ReadInt32()
+				if sectionType == 3 {
+					layer.IsSectionDivider = true
+				} else if sectionType > 0 {
+					layer.IsFolder = true
+				}
 			case "lfx2":
 				reader.ReadInt32()
 				reader.ReadInt32()
-				util.NewDescriptor(reader)
-			case "TySh":
+				types.NewDescriptor(reader)
+			case "TySh": // TODO (Font)
 				reader.Skip(56)
-				util.NewDescriptor(reader)
+				types.NewDescriptor(reader)
 				reader.Skip(6)
-				util.NewDescriptor(reader)
+				types.NewDescriptor(reader)
 				reader.Skip(32)
+			case "vogk": // TODO (Shape bounding box)
+				reader.ReadInt32()
+				reader.ReadInt32()
+				types.NewDescriptor(reader)
 			default:
 				reader.Skip(dataLength)
 			}
@@ -232,7 +261,7 @@ func (l Layer) ToString() string {
 type Layer struct {
 	ID        int32
 	Name      string
-	Rectangle *util.Rectangle
+	Rectangle *types.Rectangle
 	Channels  []*LayerChannel `json:"-"`
 	BlendMode string          `json:"-"`
 	Opacity   byte            `json:"-"`
@@ -240,27 +269,38 @@ type Layer struct {
 	Flags     byte            `json:"-"`
 
 	// [TODO?] Adjustment layer data
-	EnclosingMasks []*util.Rectangle `json:"-"`
-	DefaultColor   byte              `json:"-"`
-	MaskFlags      byte              `json:"-"`
-	Padding        int16             `json:"-"`
-	MaskRealFlags  byte              `json:"-"`
-	MaskBackground byte              `json:"-"`
+	EnclosingMasks []*types.Rectangle `json:"-"`
+	DefaultColor   byte               `json:"-"`
+	MaskFlags      byte               `json:"-"`
+	Padding        int16              `json:"-"`
+	MaskRealFlags  byte               `json:"-"`
+	MaskBackground byte               `json:"-"`
 
 	// [CHECK] Blending ranges data, empty name
 	BlendingRanges []*LayerBlendingRanges `json:"-"`
 
 	Image image.Image `json:"-"`
 
-	IsBackground          bool          `json:"-"`
-	BlendClippedElements  bool          `json:"-"`
-	BlendInteriorElements bool          `json:"-"`
-	Knockout              bool          `json:"-"`
-	ProtectionFlags       int32         `json:"-"`
-	SheetColor            *util.Color   `json:"-"`
-	ReferencePoint        []float64     `json:"-"`
-	Section               *LayerSection `json:"-"`
-	IsFolder              bool          `json:"-"`
+	IsBackground          bool         `json:"-"`
+	BlendClippedElements  bool         `json:"-"`
+	BlendInteriorElements bool         `json:"-"`
+	Knockout              bool         `json:"-"`
+	ProtectionFlags       int32        `json:"-"`
+	SheetColor            *types.Color `json:"-"`
+	ReferencePoint        []float64    `json:"-"`
+	IsSceneGroup          bool         `json:"-"`
+	IsFolder              bool         `json:"-"`
+	IsSectionDivider      bool         `json:"-"`
+	DataKeys              []string
+
+	VectorMask *LayerVectorMask `json:"-"`
+
+	Parent   *Layer
+	Children []*Layer
+}
+
+type LayerVectorMask struct {
+	IsInverted, IsLinked, IsDisabled bool
 }
 
 type LayerChannel struct {
