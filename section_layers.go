@@ -35,7 +35,7 @@ func readLayers(doc *Document) {
 
 	for i := 0; i < int(layerCount); i++ {
 		layer := new(Layer)
-
+		layer.Type = TypeUnspecified
 		layer.Rectangle = types.NewRectangle(reader)
 
 		chanCount := reader.ReadInt16()
@@ -131,7 +131,18 @@ func readLayers(doc *Document) {
 			case "luni":
 				layer.Name = reader.ReadUnicodeString()
 			case "lnsr": // layr / bgnd
-				layer.IsBackground = reader.ReadString(4) == "bgnd"
+				switch reader.ReadString(4) {
+				case "layr":
+					layer.Type = TypeDefault
+				case "shap":
+					layer.Type = TypeShape
+				case "bgnd":
+					layer.Type = TypeBackground
+				case "rend":
+					layer.Type = TypeRenderObject
+				case "lset":
+					layer.Type = TypeLockSet
+				}
 			case "lyid":
 				layer.ID = reader.ReadInt32()
 			case "clbl":
@@ -265,7 +276,7 @@ type Layer struct {
 	// [CHECK] Blending ranges data, empty name
 	BlendingRanges []*LayerBlendingRanges `json:"-"`
 
-	IsBackground          bool         `json:"-"`
+	Type                  LayerType    `json:"-"`
 	BlendClippedElements  bool         `json:"-"`
 	BlendInteriorElements bool         `json:"-"`
 	Knockout              bool         `json:"-"`
@@ -345,3 +356,14 @@ type GlobalLayerMask struct {
 	Opacity           int16
 	Kind              byte
 }
+
+type LayerType int
+
+const (
+	TypeDefault LayerType = iota
+	TypeShape
+	TypeBackground
+	TypeRenderObject
+	TypeLockSet
+	TypeUnspecified
+)
