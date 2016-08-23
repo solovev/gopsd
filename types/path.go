@@ -3,7 +3,8 @@ package types
 import "github.com/solovev/gopsd/util"
 
 type Point struct {
-	X, Y float32
+	RelativeX, RelativeY float32
+	X, Y                 float32
 }
 
 type Knot struct {
@@ -17,10 +18,16 @@ type Path struct {
 	Knots               []*Knot
 }
 
+var (
+	documentWidth, documentHeight float32
+)
+
 // TODO: If windows - reverse byte order?
-func ReadPath(data []byte) *Path {
+func ReadPath(width, height int32, data []byte) *Path {
 	r := util.NewReader(data)
 	path := new(Path)
+	documentWidth = float32(width)
+	documentHeight = float32(height)
 	index := 0
 	for r.Position < len(data) {
 		record := r.ReadInt16()
@@ -62,8 +69,12 @@ func readKnot(r *util.Reader) *Knot {
 
 func readPoint(r *util.Reader) *Point {
 	point := new(Point)
-	point.Y = readComponent(r)
-	point.X = readComponent(r)
+	point.RelativeY = readComponent(r)
+	point.RelativeX = readComponent(r)
+
+	point.X = point.RelativeX * documentWidth
+	point.Y = point.RelativeY * documentHeight
+
 	return point
 }
 
