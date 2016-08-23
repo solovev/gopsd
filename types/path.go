@@ -27,6 +27,7 @@ func ReadPath(data []byte) *Path {
 		if len(data)-r.Position >= 24 {
 			switch record {
 			case 0, 3:
+				path.IsOpen = record == 3
 				path.Knots = make([]*Knot, r.ReadInt16())
 				r.Skip(22)
 			case 1, 2, 4, 5:

@@ -199,9 +199,8 @@ func readLayers(doc *Document) {
 				vectorMask.IsInverted = (flags & (1 << 0)) > 0
 				vectorMask.IsLinked = (flags & (1 << 1)) == 0
 				vectorMask.IsDisabled = (flags & (1 << 2)) > 0
-
-				pathLength := dataLength - 8
-				vectorMask.Path = types.ReadPath(reader.ReadBytes(pathLength))
+				vectorMask.Path = types.ReadPath(reader.ReadBytes(dataLength - 8))
+				layer.VectorMask = vectorMask
 			default:
 				reader.Skip(dataLength)
 			}
