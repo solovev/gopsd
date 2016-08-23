@@ -20,8 +20,9 @@ func (s *StringMixer) AddIndent(value int) *StringMixer {
 	return s
 }
 
-func (s *StringMixer) NewLine() {
+func (s *StringMixer) NewLine() *StringMixer {
 	s.buffer.WriteString("\n")
+	return s
 }
 
 func (s *StringMixer) String() string {

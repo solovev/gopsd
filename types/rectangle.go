@@ -15,6 +15,10 @@ type Rectangle struct {
 	X, Y, Width, Height int32
 }
 
+type RectangleFloat struct {
+	Top, Left, Bottom, Right float64
+}
+
 func CreateRectangle(x, y, width, height int32) *Rectangle {
 	r := new(Rectangle)
 

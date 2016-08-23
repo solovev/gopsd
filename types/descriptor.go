@@ -181,7 +181,7 @@ func newDescriptorOffset(reader *util.Reader) *DescriptorOffset {
 func (d Descriptor) String(indent int) string {
 	sm := new(util.StringMixer)
 
-	sm.AddIndent(indent).Add("Descriptor [", fmt.Sprint(len(d.Items)), "]: ", d.Class).NewLine()
+	sm.Add("Descriptor [Class: ", d.Class, ", Length: ", fmt.Sprint(len(d.Items)), "]: ").NewLine()
 	sm.AddIndent(indent).Add("{").NewLine()
 	sm.Add(stringList(d.Items, indent))
 	sm.AddIndent(indent).Add("}")
@@ -193,20 +193,19 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 	sm := new(util.StringMixer)
 
 	for _, item := range items {
-		sm.AddIndent(indent+1).Add("[", item.Type, "] ", item.Key, ": ")
+		sm.AddIndent(indent+1).Add("[", item.Type, "] \"", item.Key, "\": ")
 		switch value := item.Value.(type) {
 		case map[string]*DescriptorEntity: // Reference, List
 			if item.Type == "obj " {
-				sm.AddIndent(indent+2).Add("Reference [", fmt.Sprint(len(items)), "]").NewLine()
+				sm.Add("Reference [Length: ", fmt.Sprint(len(items)), "]").NewLine()
 			} else {
-				sm.AddIndent(indent+2).Add("List [", fmt.Sprint(len(items)), "]").NewLine()
+				sm.Add("List [Length: ", fmt.Sprint(len(items)), "]").NewLine()
 			}
-			sm.AddIndent(indent + 2).Add("{").NewLine()
+			sm.AddIndent(indent + 1).Add("{").NewLine()
 			sm.Add(stringList(value, indent+2))
-			sm.AddIndent(indent + 2).Add("}")
+			sm.AddIndent(indent + 1).Add("}")
 		case *Descriptor:
-			sm.NewLine()
-			sm.Add(value.String(indent + 2))
+			sm.Add(value.String(indent + 1))
 		case float64, int32, bool:
 			sm.Add(fmt.Sprint(value))
 		case *DescriptorUnitFloat:

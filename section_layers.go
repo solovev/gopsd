@@ -189,9 +189,12 @@ func readLayers(doc *Document) {
 				types.NewDescriptor(reader)
 				reader.Skip(32)
 			case "vogk": // TODO (Shape bounding box)
-				reader.ReadInt32()
-				reader.ReadInt32()
-				types.NewDescriptor(reader)
+				reader.Skip(4) // Version (= 1 for PS CC)
+				reader.Skip(4) // Version (= 16)
+				dsc := types.NewDescriptor(reader)
+				if layer.Name == "ShapeCall" {
+					fmt.Println(dsc.String(0))
+				}
 			case "vmsk", "vsms":
 				reader.Skip(4) // Version (= 3 for PS 6.0)
 				flags := uint32(reader.ReadInt32())
