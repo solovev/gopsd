@@ -191,10 +191,7 @@ func readLayers(doc *Document) {
 			case "vogk": // TODO (Shape bounding box)
 				reader.Skip(4) // Version (= 1 for PS CC)
 				reader.Skip(4) // Version (= 16)
-				dsc := types.NewDescriptor(reader)
-				if layer.Name == "ShapeCall" {
-					fmt.Println(dsc.String(0))
-				}
+				layer.VectorOriginData = types.NewDescriptor(reader)
 			case "vmsk", "vsms":
 				reader.Skip(4) // Version (= 3 for PS 6.0)
 				flags := uint32(reader.ReadInt32())
@@ -305,7 +302,8 @@ type Layer struct {
 	IsSectionDivider      bool         `json:"-"`
 	DataKeys              []string
 
-	VectorMask *LayerVectorMask `json:"-"`
+	VectorMask       *LayerVectorMask `json:"-"`
+	VectorOriginData *types.Descriptor
 
 	Parent   *Layer
 	Children []*Layer

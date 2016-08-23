@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/solovev/gopsd/util"
 )
@@ -178,7 +180,61 @@ func newDescriptorOffset(reader *util.Reader) *DescriptorOffset {
 	return offset
 }
 
-func (d Descriptor) String(indent int) string {
+func (d *Descriptor) GetValue(path string) (string, error) {
+	return getValue(path, "Root", d.Items)
+}
+
+func getValue(path, collectionName string, collection map[string]*DescriptorEntity) (string, error) {
+	pathSplit := strings.Split(path, "->")
+	pathSlice := strings.TrimSpace(pathSplit[0])
+	pathIndex := -1
+
+	if strings.HasPrefix(pathSlice, "#") { // CHECK: Or use [n] instead of #n?
+		itemIndex, err := strconv.Atoi(pathSlice[1:])
+		if err == nil {
+			if itemIndex >= len(collection) || itemIndex < 0 {
+				return "", fmt.Errorf("Index %s out of %s's bounds.", pathSlice, collectionName)
+			}
+			pathIndex = itemIndex
+		}
+	}
+	i := 0
+	for key, item := range collection {
+		if i == pathIndex || key == pathSlice {
+			switch value := item.Value.(type) {
+			case map[string]*DescriptorEntity:
+				if len(pathSplit) > 1 {
+					return getValue(strings.Join(pathSplit[1:], "->"), item.Key, value)
+				}
+				return stringList(value, 0), nil
+			case *Descriptor:
+				if len(pathSplit) > 1 {
+					return getValue(strings.Join(pathSplit[1:], "->"), item.Key, value.Items)
+				}
+				return value.string(0), nil
+			case float64, int32, bool:
+				return fmt.Sprint(value), nil
+			case *DescriptorUnitFloat:
+				return fmt.Sprint(value.Value), nil
+			case string:
+				return value, nil
+			default:
+				return "", fmt.Errorf("Can't get value of %s. Unsupported type %s.", pathSlice, item.Type)
+			}
+		}
+		i++
+	}
+	if i == len(collection) {
+		return "", fmt.Errorf("Item %s not found in %s.", pathSlice, collectionName)
+	}
+	return stringList(collection, 0), nil
+}
+
+func (d *Descriptor) ToString() string {
+	return d.string(0)
+}
+
+func (d Descriptor) string(indent int) string {
 	sm := new(util.StringMixer)
 
 	sm.Add("Descriptor [Class: ", d.Class, ", Length: ", fmt.Sprint(len(d.Items)), "]: ").NewLine()
@@ -205,7 +261,7 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 			sm.Add(stringList(value, indent+2))
 			sm.AddIndent(indent + 1).Add("}")
 		case *Descriptor:
-			sm.Add(value.String(indent + 1))
+			sm.Add(value.string(indent + 1))
 		case float64, int32, bool:
 			sm.Add(fmt.Sprint(value))
 		case *DescriptorUnitFloat:
