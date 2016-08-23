@@ -74,7 +74,6 @@ func (d *Document) GetTreeRepresentation() *Layer {
 	root.ID = -1
 	root.Name = "RootLayer"
 	root.Rectangle = types.CreateRectangle(0, 0, d.Width, d.Height)
-	root.Image = d.Image
 
 	current := root
 	for i := len(d.Layers) - 1; i >= 0; i-- {

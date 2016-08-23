@@ -216,12 +216,11 @@ func readLayers(doc *Document) {
 		width := int(layer.Rectangle.Width)
 		height := int(layer.Rectangle.Height)
 
-		data := make(map[int][]int8)
-		for i, channel := range layer.Channels {
+		for _, channel := range layer.Channels {
 			compression := reader.ReadInt16()
 			switch compression {
 			case 0:
-				data[i] = reader.ReadSignedBytes(width * height)
+				channel.Data = reader.ReadSignedBytes(width * height)
 			case 1:
 				var result []int8
 				scanLines := make([]int16, height)
@@ -232,33 +231,11 @@ func readLayers(doc *Document) {
 					line := util.UnpackRLEBits(reader.ReadSignedBytes(scanLines[i]), width)
 					result = append(result, line...)
 				}
-				data[i] = result
+				channel.Data = result
 			default:
 				panic(fmt.Sprintf("[Layer: %s] Unknown compression method of channel [id: %d]", layer.Name, channel.ID))
 			}
 		}
-
-		if width == 0 || height == 0 {
-			continue
-		}
-
-		image := image.NewRGBA(image.Rect(0, 0, width, height))
-		switch len(layer.Channels) {
-		case 3: // RGB
-			// [TODO]
-		case 4, 5:
-			for x := 0; x < width; x++ {
-				for y := 0; y < height; y++ {
-					i := x + (y * width)
-					red := byte(data[1][i])
-					green := byte(data[2][i])
-					blue := byte(data[3][i])
-					alpha := byte(data[0][i])
-					image.Set(x, y, color.RGBA{red, green, blue, alpha})
-				}
-			}
-		}
-		layer.Image = image
 	}
 	reader.Skip(int(length) - (reader.Position - pos))
 }
@@ -288,8 +265,6 @@ type Layer struct {
 	// [CHECK] Blending ranges data, empty name
 	BlendingRanges []*LayerBlendingRanges `json:"-"`
 
-	Image image.Image `json:"-"`
-
 	IsBackground          bool         `json:"-"`
 	BlendClippedElements  bool         `json:"-"`
 	BlendInteriorElements bool         `json:"-"`
@@ -302,11 +277,39 @@ type Layer struct {
 	IsSectionDivider      bool         `json:"-"`
 	DataKeys              []string
 
-	VectorMask       *LayerVectorMask `json:"-"`
-	VectorOriginData *types.Descriptor
+	VectorMask       *LayerVectorMask  `json:"-"`
+	VectorOriginData *types.Descriptor `json:"-"`
 
 	Parent   *Layer
 	Children []*Layer
+}
+
+func (l *Layer) GetImage() (image.Image, error) {
+	width := int(l.Rectangle.Width)
+	height := int(l.Rectangle.Height)
+
+	if width == 0 || height == 0 {
+		return nil, nil
+	}
+
+	image := image.NewRGBA(image.Rect(0, 0, width, height))
+	switch len(l.Channels) {
+	case 3: // RGB
+		// [TODO]
+	case 4, 5:
+		c := l.Channels
+		for x := 0; x < width; x++ {
+			for y := 0; y < height; y++ {
+				i := x + (y * width)
+				red := byte(c[1].Data[i])
+				green := byte(c[2].Data[i])
+				blue := byte(c[3].Data[i])
+				alpha := byte(c[0].Data[i])
+				image.Set(x, y, color.RGBA{red, green, blue, alpha})
+			}
+		}
+	}
+	return image, nil
 }
 
 type LayerVectorMask struct {
@@ -314,10 +317,17 @@ type LayerVectorMask struct {
 	Path                             *types.Path
 }
 
+// LayerChannel stores color data of channel.
+// Channel IDs:
+//		0 = red, 1 = green, 2 = blue;
+//		-1 = transparency mask
+//		-2 = user supplied layer mask
+//		-3 real user supplied layer mask
 type LayerChannel struct {
 	ID int16
 	// [CHECK]
 	Length int64
+	Data   []int8
 }
 
 type LayerBlendingRanges struct {
