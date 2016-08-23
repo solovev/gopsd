@@ -192,6 +192,16 @@ func readLayers(doc *Document) {
 				reader.ReadInt32()
 				reader.ReadInt32()
 				types.NewDescriptor(reader)
+			case "vmsk", "vsms":
+				reader.Skip(4) // Version (= 3 for PS 6.0)
+				flags := uint32(reader.ReadInt32())
+				vectorMask := new(LayerVectorMask)
+				vectorMask.IsInverted = (flags & (1 << 0)) > 0
+				vectorMask.IsLinked = (flags & (1 << 1)) == 0
+				vectorMask.IsDisabled = (flags & (1 << 2)) > 0
+
+				pathLength := dataLength - 8
+				vectorMask.Path = types.ReadPath(reader.ReadBytes(pathLength))
 			default:
 				reader.Skip(dataLength)
 			}
@@ -301,6 +311,7 @@ type Layer struct {
 
 type LayerVectorMask struct {
 	IsInverted, IsLinked, IsDisabled bool
+	Path                             *types.Path
 }
 
 type LayerChannel struct {

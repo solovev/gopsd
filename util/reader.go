@@ -42,6 +42,14 @@ func (r *Reader) ReadInt16() int16 {
 	return value
 }
 
+func (r *Reader) ReadInt24() int {
+	buffer := r.ReadBytes(3)
+	value := int(buffer[0]) << 16
+	value |= int(buffer[1]) << 8
+	value |= int(buffer[2])
+	return value
+}
+
 func (r *Reader) ReadInt32() int32 {
 	var value int32
 	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {

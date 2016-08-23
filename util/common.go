@@ -82,6 +82,8 @@ func StringValueIs(value string, values ...string) bool {
 
 func getInteger(unk interface{}) int {
 	switch i := unk.(type) {
+	case int64:
+		return int(i)
 	case int32:
 		return int(i)
 	case int16:
