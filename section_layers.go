@@ -128,6 +128,10 @@ func readLayers(doc *Document) {
 			dataPos := reader.Position
 
 			switch key {
+			case "tySh":
+				layer.ObsoleteTypeTool = types.ReadObsoleteTypeTool(reader)
+			case "TySh":
+				layer.TypeTool = types.ReadTypeTool(reader)
 			case "luni":
 				layer.Name = reader.ReadUnicodeString()
 			case "lnsr": // layr / bgnd
@@ -193,12 +197,6 @@ func readLayers(doc *Document) {
 				reader.ReadInt32()
 				reader.ReadInt32()
 				types.NewDescriptor(reader)
-			case "TySh": // TODO (Font)
-				reader.Skip(56)
-				types.NewDescriptor(reader)
-				reader.Skip(6)
-				types.NewDescriptor(reader)
-				reader.Skip(32)
 			case "vogk": // TODO (Shape bounding box)
 				reader.Skip(4) // Version (= 1 for PS CC)
 				reader.Skip(4) // Version (= 16)
@@ -291,8 +289,15 @@ type Layer struct {
 	VectorMask       *LayerVectorMask  `json:"-"`
 	VectorOriginData *types.Descriptor `json:"-"`
 
+	ObsoleteTypeTool *types.ObsoleteTypeTool `json:"-"`
+	TypeTool         *types.TypeTool         `json:"-"`
+
 	Parent   *Layer
 	Children []*Layer
+}
+
+func (l *Layer) IsText() bool {
+	return l.ObsoleteTypeTool != nil || l.TypeTool != nil
 }
 
 func (l *Layer) GetImage() (image.Image, error) {

@@ -110,6 +110,17 @@ func (r *Reader) ReadUnicodeString() string {
 	return string(utf16.Decode(array))
 }
 
+func (r *Reader) ReadUnicodeStringLen(n int) string {
+	array := make([]uint16, n)
+	for i := range array {
+		if err := binary.Read(r.buf, binary.BigEndian, &array[i]); err != nil {
+			panic(err)
+		}
+		r.Position += 2
+	}
+	return string(utf16.Decode(array))
+}
+
 func (r *Reader) ReadDynamicString() string {
 	length := int(r.ReadInt32())
 	if length == 0 {

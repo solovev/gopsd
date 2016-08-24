@@ -19,6 +19,10 @@ type RectangleFloat struct {
 	Top, Left, Bottom, Right float64
 }
 
+func ReadRectangleFloat(reader *util.Reader) *RectangleFloat {
+	return &RectangleFloat{reader.ReadFloat64(), reader.ReadFloat64(), reader.ReadFloat64(), reader.ReadFloat64()}
+}
+
 func CreateRectangle(x, y, width, height int32) *Rectangle {
 	r := new(Rectangle)
 
