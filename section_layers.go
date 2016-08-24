@@ -193,13 +193,15 @@ func readLayers(doc *Document) {
 				} else if sectionType > 0 {
 					layer.IsFolder = true
 				}
+			case "lrFX":
+				layer.ObsoleteEffects = types.ReadObsoleteEffects(reader)
 			case "lfx2":
-				reader.ReadInt32()
-				reader.ReadInt32()
-				types.NewDescriptor(reader)
+				reader.Skip(4) // Object based effects version (= 0)
+				reader.Skip(4) // Descriptor version (= 16)
+				layer.Effects = types.NewDescriptor(reader)
 			case "vogk": // TODO (Shape bounding box)
 				reader.Skip(4) // Version (= 1 for PS CC)
-				reader.Skip(4) // Version (= 16)
+				reader.Skip(4) // Descriptor version (= 16)
 				layer.VectorOriginData = types.NewDescriptor(reader)
 			case "vmsk", "vsms":
 				reader.Skip(4) // Version (= 3 for PS 6.0)
@@ -291,6 +293,9 @@ type Layer struct {
 
 	ObsoleteTypeTool *types.ObsoleteTypeTool `json:"-"`
 	TypeTool         *types.TypeTool         `json:"-"`
+
+	ObsoleteEffects *types.ObsoleteEffects `json:"-"`
+	Effects         *types.Descriptor      `json:"-"`
 
 	Parent   *Layer
 	Children []*Layer

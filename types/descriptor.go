@@ -134,7 +134,7 @@ func readTextData(r *util.Reader) interface{} {
 	c := r.ReadByte()
 	switch c {
 	case 60: // "<" - Starting of map
-		r.Skip(1)
+		r.Skip(1) // "<"
 		collection := make(map[string]interface{})
 		for {
 			r.SkipWhitespaces()
@@ -143,7 +143,7 @@ func readTextData(r *util.Reader) interface{} {
 				var name []byte
 				for {
 					char := r.ReadByte()
-					// If byte if letter (a-zA-Z)
+					// If byte is letter (a-zA-Z)
 					if (char >= 65 && char <= 90) || (char >= 97 && char <= 122) {
 						name = append(name, char)
 					} else {

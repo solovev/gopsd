@@ -20,6 +20,7 @@ import (
 //			Flags int
 //		To:
 //			IsInverted, IsNotLinked, IsDisabled bool
+// TODO Add ColorSpace into Color struct
 type Document struct {
 	IsLarge bool `json:"-"`
 
