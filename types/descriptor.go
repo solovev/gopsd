@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -119,15 +118,9 @@ func newDescriptorList(descriptor *Descriptor, reader *util.Reader) map[string]*
 			entity.Value = newDescriptorClass(reader)
 		case "alis": // TODO
 			reader.Skip(reader.ReadInt32())
-		case "tdta": // TODO
+		case "tdta":
 			r := util.NewReader(reader.ReadBytes(reader.ReadInt32()))
 			entity.Value = readTextData(r)
-
-			root := entity.Value.(map[string]interface{})
-			editor := root["EngineDict"].(map[string]interface{})
-
-			fmt.Println("A", editor["Editor"])
-			os.Exit(1)
 		default:
 			panic(fmt.Sprintf("Unknown OSType key [%s] in entity [%s]", entity.Type, entity.Key))
 		}
@@ -278,11 +271,11 @@ func newDescriptorOffset(reader *util.Reader) *DescriptorOffset {
 	return offset
 }
 
-func (d *Descriptor) GetValue(path string) (string, error) {
+func (d *Descriptor) GetValue(path string) (interface{}, error) {
 	return getValue(path, "Root", d.Items)
 }
 
-func getValue(path, collectionName string, collection map[string]*DescriptorEntity) (string, error) {
+func getValue(path, collectionName string, collection map[string]*DescriptorEntity) (interface{}, error) {
 	pathSplit := strings.Split(path, "->")
 	pathSlice := strings.TrimSpace(pathSplit[0])
 	pathIndex := -1
@@ -291,7 +284,7 @@ func getValue(path, collectionName string, collection map[string]*DescriptorEnti
 		itemIndex, err := strconv.Atoi(pathSlice[1:])
 		if err == nil {
 			if itemIndex >= len(collection) || itemIndex < 0 {
-				return "", fmt.Errorf("Index %s out of %s's bounds.", pathSlice, collectionName)
+				return nil, fmt.Errorf("Index %s out of %s's bounds", pathSlice, collectionName)
 			}
 			pathIndex = itemIndex
 		}
@@ -299,33 +292,78 @@ func getValue(path, collectionName string, collection map[string]*DescriptorEnti
 	i := 0
 	for key, item := range collection {
 		if i == pathIndex || key == pathSlice {
-			switch value := item.Value.(type) {
+			if item.Type == "tdta" {
+				if len(pathSplit) > 1 {
+					return getTextDataValue(strings.Join(pathSplit[1:], "->"), item.Key, item.Value)
+				}
+				return item.Value, nil
+			}
+			switch instance := item.Value.(type) {
 			case map[string]*DescriptorEntity:
 				if len(pathSplit) > 1 {
-					return getValue(strings.Join(pathSplit[1:], "->"), item.Key, value)
+					return getValue(strings.Join(pathSplit[1:], "->"), item.Key, instance)
 				}
-				return stringList(value, 0), nil
+				return stringList(instance, 0), nil
 			case *Descriptor:
 				if len(pathSplit) > 1 {
-					return getValue(strings.Join(pathSplit[1:], "->"), item.Key, value.Items)
+					return getValue(strings.Join(pathSplit[1:], "->"), item.Key, instance.Items)
 				}
-				return value.string(0), nil
-			case float64, int32, bool:
-				return fmt.Sprint(value), nil
+				return instance.string(0), nil
+			case float64, int32, bool, string:
+				return instance, nil
 			case *DescriptorUnitFloat:
-				return fmt.Sprint(value.Value), nil
-			case string:
-				return value, nil
+				return instance.Value, nil
 			default:
-				return "", fmt.Errorf("Can't get value of %s. Unsupported type %s.", pathSlice, item.Type)
+				return nil, fmt.Errorf("Can't get value of \"%s\". Unsupported type \"%s\"", pathSlice, item.Type)
 			}
 		}
 		i++
 	}
 	if i == len(collection) {
-		return "", fmt.Errorf("Item %s not found in %s.", pathSlice, collectionName)
+		return nil, fmt.Errorf("Item \"%s\" does not exist in \"%s\"", pathSlice, collectionName)
 	}
 	return stringList(collection, 0), nil
+}
+
+func getTextDataValue(path, collectionName string, collection interface{}) (interface{}, error) {
+	pathSplit := strings.Split(path, "->")
+	pathSlice := strings.TrimSpace(pathSplit[0])
+	pathIndex := -1
+
+	if strings.HasPrefix(pathSlice, "#") {
+		itemIndex, err := strconv.Atoi(pathSlice[1:])
+		if err == nil {
+			pathIndex = itemIndex
+		}
+	}
+
+	switch instance := collection.(type) {
+	case map[string]interface{}:
+		if value, exist := instance[pathSlice]; exist {
+			if len(pathSplit) > 1 {
+				return getTextDataValue(strings.Join(pathSplit[1:], "->"), pathSlice, value)
+			}
+			return value, nil
+		}
+		return nil, fmt.Errorf("Item \"%s\" does not exist in \"%s\"", pathSlice, collectionName)
+	case []interface{}:
+		if pathIndex != -1 {
+			if pathIndex >= len(instance) {
+				return nil, fmt.Errorf("Index %s out of %s's bounds", pathSlice, collectionName)
+			}
+			for i, value := range instance {
+				if i == pathIndex {
+					if len(pathSplit) > 1 {
+						return getTextDataValue(strings.Join(pathSplit[1:], "->"), pathSlice, value)
+					}
+					return value, nil
+				}
+			}
+		}
+		return nil, fmt.Errorf("%s is list. Specify element id, instead of \"%s\" key", collectionName, pathSplit)
+	default:
+		return instance, nil
+	}
 }
 
 func (d *Descriptor) ToString() string {
