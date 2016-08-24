@@ -1,7 +1,9 @@
 package types
 
 import (
+	"encoding/binary"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -118,15 +120,111 @@ func newDescriptorList(descriptor *Descriptor, reader *util.Reader) map[string]*
 		case "alis": // TODO
 			reader.Skip(reader.ReadInt32())
 		case "tdta": // TODO
-			//reader.Skip(reader.ReadInt32())
-			//fmt.Println(reader.ReadDynamicString())
-			reader.ReadDynamicString()
+			r := util.NewReader(reader.ReadBytes(reader.ReadInt32()))
+			entity.Value = readTextData(r)
+
+			root := entity.Value.(map[string]interface{})
+			editor := root["EngineDict"].(map[string]interface{})
+
+			fmt.Println("A", editor["Editor"])
+			os.Exit(1)
 		default:
 			panic(fmt.Sprintf("Unknown OSType key [%s] in entity [%s]", entity.Type, entity.Key))
 		}
 		value[entity.Key] = entity
 	}
 	return value
+}
+
+func readTextData(r *util.Reader) interface{} {
+	r.SkipWhitespaces()
+	c := r.ReadByte()
+	switch c {
+	case 60: // "<" - Starting of map
+		r.Skip(1)
+		collection := make(map[string]interface{})
+		for {
+			r.SkipWhitespaces()
+			switch r.ReadByte() {
+			case 47: // "/"
+				var name []byte
+				for {
+					char := r.ReadByte()
+					// If byte if letter (a-zA-Z)
+					if (char >= 65 && char <= 90) || (char >= 97 && char <= 122) {
+						name = append(name, char)
+					} else {
+						r.UnreadByte()
+						break
+					}
+				}
+				collection[string(name)] = readTextData(r)
+			case 62: // ">"
+				r.Skip(1)
+				return collection
+			}
+		}
+	case 40: // "(" - Starting of utf16 string
+		r.Skip(2) // 254 & 255
+		var buffer []byte
+		for {
+			b := r.ReadByte()
+			n := len(buffer)
+			if n > 0 && buffer[n-1] == 0 && b == 13 {
+				buffer = buffer[0 : n-1]
+				continue
+			}
+			// Break if byte is ")" and length of buffer is 0 or previous byte isn't "\"
+			if b == 41 {
+				if n == 0 || buffer[n-1] != 92 {
+					break
+				} else {
+					buffer = append(buffer, 0)
+				}
+			}
+			buffer = append(buffer, b)
+		}
+		return util.BytesToUTF16(buffer, binary.BigEndian)
+	case 91: // - Starting of array
+		var list []interface{}
+		for {
+			c = r.ReadByte()
+			if c == 9 || c == 10 || c == 32 {
+				continue
+			}
+			if c == 93 {
+				return list
+			}
+			r.UnreadByte()
+			list = append(list, readTextData(r))
+		}
+	default: // Primitive object (boolean/float)
+		switch c {
+		case 116: // "t"
+			r.Skip(3) // Skip "rue"
+			return true
+		case 102: // "f"
+			r.Skip(4) // Skip "alse"
+			return false
+		default:
+			array := []byte{c}
+			for {
+				c = r.ReadByte()
+				// if byte is "." or diggit
+				if c == 46 || (c >= 48 && c <= 57) {
+					array = append(array, c)
+				} else {
+					r.UnreadByte()
+					break
+				}
+			}
+			result, err := strconv.ParseFloat(string(array), 64)
+			if err != nil {
+				panic(err)
+			}
+			return result
+		}
+	}
 }
 
 func newDescriptorReference(reader *util.Reader) map[string]*DescriptorEntity {

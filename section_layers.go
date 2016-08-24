@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"os"
 
 	"github.com/solovev/gopsd/types"
 	"github.com/solovev/gopsd/util"
@@ -131,7 +132,10 @@ func readLayers(doc *Document) {
 			case "tySh":
 				layer.ObsoleteTypeTool = types.ReadObsoleteTypeTool(reader)
 			case "TySh":
+				fmt.Println(layer.Name)
 				layer.TypeTool = types.ReadTypeTool(reader)
+				fmt.Println(layer.TypeTool.TextData.ToString())
+				os.Exit(1)
 			case "luni":
 				layer.Name = reader.ReadUnicodeString()
 			case "lnsr": // layr / bgnd

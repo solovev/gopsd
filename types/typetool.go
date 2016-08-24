@@ -6,7 +6,7 @@ type TypeTool struct {
 	Transformation *Matrix
 	TextData       *Descriptor
 	WarpData       *Descriptor
-	BBox           *RectangleFloat // CHECK Info in spec is not even clear, wtf is 4 * 8? Floats?
+	// BBox           *RectangleFloat // CHECK TODO Info in spec is not even clear, wtf is 4 * 8? Floats?
 }
 
 func ReadTypeTool(reader *util.Reader) *TypeTool {
@@ -22,7 +22,7 @@ func ReadTypeTool(reader *util.Reader) *TypeTool {
 	reader.Skip(4) // Descriptor version (= 16 for PS 6.0)
 	tt.WarpData = NewDescriptor(reader)
 
-	tt.BBox = ReadRectangleFloat(reader)
+	reader.Skip(32)
 
 	return tt
 }

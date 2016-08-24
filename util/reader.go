@@ -42,6 +42,14 @@ func (r *Reader) ReadInt16() int16 {
 	return value
 }
 
+func (r *Reader) ReadUInt16() uint16 {
+	var value uint16
+	if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
+		panic(err)
+	}
+	r.Position += 2
+	return value
+}
 func (r *Reader) ReadInt24() int {
 	buffer := r.ReadBytes(3)
 	value := int(buffer[0]) << 16
@@ -155,4 +163,67 @@ func (r *Reader) Skip(number interface{}) {
 	if _, err := r.buf.Seek(int64(n), 1); err != nil {
 		panic(err)
 	}
+}
+
+func (r *Reader) UnreadByte() {
+	if err := r.buf.UnreadByte(); err != nil {
+		panic(err)
+	}
+	r.Position--
+}
+
+func (r *Reader) SkipWhitespaces() {
+	for {
+		if ValueIs(r.ReadByte(), 9, 10, 32) {
+			continue
+		}
+		r.UnreadByte()
+		break
+	}
+}
+
+func (r *Reader) SkipString(value string) {
+	for _, c := range value {
+		if byte(c) != r.ReadByte() {
+			panic("Try to skip not specific string.")
+		}
+	}
+}
+
+func (r *Reader) IsNext(value string) bool {
+	count := 0
+	for _, c := range value {
+		if byte(c) != r.ReadByte() {
+			for i := 0; i < count+1; i++ {
+				if err := r.buf.UnreadByte(); err != nil {
+					panic(err)
+				}
+				r.Position -= count + 1
+			}
+			return false
+		}
+		count++
+	}
+	return true
+}
+
+func (r *Reader) ReadStringBefore(mark byte) string {
+	var result []byte
+	for {
+		var value byte
+		if err := binary.Read(r.buf, binary.BigEndian, &value); err != nil {
+			panic(err)
+		}
+
+		if value == mark {
+			if err := r.buf.UnreadByte(); err != nil {
+				panic(err)
+			}
+			break
+		}
+
+		result = append(result, value)
+		r.Position += 1
+	}
+	return string(result)
 }
