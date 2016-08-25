@@ -24,12 +24,18 @@ func main() {
 
 func saveAsPNG(layer *gopsd.Layer) {
 	out, err := os.Create("./images/" + layer.Name + ".png")
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkError(err)
 
-	err = png.Encode(out, layer.Image)
+	img, err := layer.GetImage()
+	checkError(err)
+
+	err = png.Encode(out, img)
+	checkError(err)
+}
+
+func checkError(err error) {
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 }
