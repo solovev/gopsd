@@ -10,9 +10,8 @@ import (
 
 func main() {
 	doc, err := gopsd.ParseFromPath("./test.psd")
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkError(err)
+
 	os.Mkdir("./images", 0777)
 
 	for _, layer := range doc.Layers {

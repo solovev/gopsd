@@ -16,9 +16,8 @@ import (
 
 func main() {
 	doc, err := gopsd.ParseFromPath("./test.psd")
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkError(err)
+
 	os.Mkdir("./images", 0777)
 
 	for _, layer := range doc.Layers {
@@ -30,13 +29,19 @@ func main() {
 
 func saveAsPNG(layer *gopsd.Layer) {
 	out, err := os.Create("./images/" + layer.Name + ".png")
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkError(err)
 
-	err = png.Encode(out, layer.Image)
+	img, err := layer.GetImage()
+	checkError(err)
+
+	err = png.Encode(out, img)
+	checkError(err)
+}
+
+func checkError(err error) {
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 }
 ```
