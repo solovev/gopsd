@@ -12,7 +12,6 @@ import (
 
 // TODO all INT -> INT64 (**PSB**)
 // TODO make([]interface{}, 0) -> var name []interface{}
-// TODO Set Flags bits (ints now) to separated booleans
 // TODO Remove panic, add error to return
 // TODO Replace New*** to Read*** if reader object passed as parameter
 // TODO Flags. bit 1 = invert, bit 2 = not link, bit 3 = disable

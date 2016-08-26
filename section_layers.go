@@ -63,7 +63,13 @@ func readLayers(doc *Document) {
 
 		layer.Opacity = byte(math.Ceil(float64(reader.ReadByte()) / 255 * 100))
 		layer.Clipping = reader.ReadByte()
-		layer.Flags = reader.ReadByte()
+
+		flags := reader.ReadByte()
+		layer.TransparencyProtected = (flags & (1 << 0)) > 0
+		layer.Visible = (flags & (1 << 1)) > 0
+		layer.Obsolete = (flags & (1 << 2)) > 0
+		layer.IrrelevantPixelData = (flags & (1 << 4)) > 0
+
 		reader.Skip(1) // Filler
 
 		extraLength := reader.ReadInt32()
@@ -263,7 +269,6 @@ type Layer struct {
 	BlendMode string          `json:"-"`
 	Opacity   byte            `json:"-"`
 	Clipping  byte            `json:"-"`
-	Flags     byte            `json:"-"`
 
 	// [TODO?] Adjustment layer data
 	EnclosingMasks []*types.Rectangle `json:"-"`
@@ -296,6 +301,8 @@ type Layer struct {
 
 	ObsoleteEffects *types.ObsoleteEffects `json:"-"`
 	Effects         *types.Descriptor      `json:"-"`
+
+	TransparencyProtected, Visible, Obsolete, IrrelevantPixelData bool
 
 	Parent   *Layer
 	Children []*Layer
