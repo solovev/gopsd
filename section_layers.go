@@ -65,10 +65,10 @@ func readLayers(doc *Document) {
 		layer.Clipping = reader.ReadByte()
 
 		flags := reader.ReadByte()
-		layer.TransparencyProtected = (flags & (1 << 0)) > 0
-		layer.Visible = (flags & (1 << 1)) > 0
-		layer.Obsolete = (flags & (1 << 2)) > 0
-		layer.IrrelevantPixelData = (flags & (1 << 4)) > 0
+		layer.TransparencyProtected = (flags & (1 << 0)) == 0
+		layer.Visible = (flags & (1 << 1)) == 0
+		layer.Obsolete = (flags & (1 << 2)) == 0
+		layer.IrrelevantPixelData = (flags & (1 << 4)) == 0
 
 		reader.Skip(1) // Filler
 

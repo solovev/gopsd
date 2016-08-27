@@ -77,15 +77,16 @@ func (d *Document) GetTreeRepresentation() *Layer {
 	current := root
 	for i := len(d.Layers) - 1; i >= 0; i-- {
 		entry := d.Layers[i]
-		if entry.IsFolder {
-			entry.Parent = current
-			current.Children = append(current.Children, entry)
-			current = entry
-		} else if entry.IsSectionDivider {
+		if entry.IsSectionDivider {
 			current = current.Parent
-		} else {
-			entry.Parent = current
-			current.Children = append(current.Children, entry)
+			continue
+		}
+
+		entry.Parent = current
+		current.Children = append(current.Children, entry)
+
+		if entry.IsFolder {
+			current = entry
 		}
 	}
 	return root
