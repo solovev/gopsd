@@ -46,7 +46,8 @@ func readImageData(doc *Document) {
 			red := byte(chanData[0][i])
 			green := byte(chanData[1][i])
 			blue := byte(chanData[2][i])
-			image.Set(x, y, color.RGBA{red, green, blue, 255})
+			alpha := byte(chanData[3][i])
+			image.Set(x, y, color.RGBA{red, green, blue, alpha})
 		}
 	}
 	doc.Image = image
