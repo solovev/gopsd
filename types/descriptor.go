@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -19,6 +20,8 @@ type DescriptorEntity struct {
 	Key   string
 	Type  string
 	Value interface{}
+
+	Raw string `json:"-"`
 }
 
 type DescriptorUnitFloat struct {
@@ -119,7 +122,11 @@ func newDescriptorList(descriptor *Descriptor, reader *util.Reader) map[string]*
 		case "alis": // TODO
 			reader.Skip(reader.ReadInt32())
 		case "tdta":
-			r := util.NewReader(reader.ReadBytes(reader.ReadInt32()))
+			bytes := reader.ReadBytes(reader.ReadInt32())
+
+			entity.Raw = string(bytes)
+
+			r := util.NewReader(bytes)
 			entity.Value = readTextData(r)
 		default:
 			panic(fmt.Sprintf("Unknown OSType key [%s] in entity [%s]", entity.Type, entity.Key))
@@ -415,7 +422,8 @@ func stringList(items map[string]*DescriptorEntity, indent int) string {
 		case *DescriptorReferenceEnum:
 			sm.Add("[Type: ", value.Type, ", Enum: ", value.Enum, ", Class: ", value.Class, " Name: ", value.Name, "]")
 		default:
-			sm.Add("?")
+			jsonValue, _ := json.MarshalIndent(item.Value, "", "  ")
+			sm.Add(string(jsonValue))
 		}
 		sm.NewLine()
 	}
